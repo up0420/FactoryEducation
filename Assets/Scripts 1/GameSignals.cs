@@ -1,16 +1,25 @@
+
 using System;
 
 /// <summary>
-/// NetSession¿¡¼­ »ç¿ëµÇ´Â Àü¿ª ÀÌº¥Æ® ½ÅÈ£ ÄÁÅ×ÀÌ³Ê.
-/// ½ÇÁ¦ °ÔÀÓ ·ÎÁ÷ ¸ðµâÀº ÀÌ ÀÌº¥Æ®¸¦ ±¸µ¶ÇÕ´Ï´Ù.
+/// NetSessionï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½È£ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½.
+/// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
 /// </summary>
 public static class GameSignals
 {
-    // NetSession¿¡¼­ /session/start ¸Þ½ÃÁö ¼ö½Å ½Ã È£ÃâµÊ
-    public static event Action SessionStart;
 
-    // NetSession¿¡¼­ /emergency/stop ¸Þ½ÃÁö ¼ö½Å ½Ã È£ÃâµÊ
-    public static event Action<string, string> EmergencyStop; // ID, Reason
+    // Called from NetSession.cs when game session starts
+    public static Action SessionStart;
+
+    // Called from NetSession.cs when Emergency Stop occurs
+    // Parameters: playerId, reason
+    public static Action<string, string> EmergencyStop;
+
+    // Called from NetSession.cs when PPE selection is confirmed
+    // Parameters: playerId, correctCount, bonus
+    public static Action<string, int, int> PpeConfirmed;
+
+    // Add more game events here if needed
+    // Example: public static Action<int> ScoreUpdated;
 }
 
-// ÀÌ ÆÄÀÏÀº NetSession.cs¿Í ´Ù¸¥ ¸ðµâ °£ÀÇ ¿¬°á°í¸® ¿ªÇÒÀ» ÇÕ´Ï´Ù.

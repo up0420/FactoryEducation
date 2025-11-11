@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum NodeRole { Host, Client }
@@ -14,11 +15,14 @@ public class NetSession : MonoBehaviour
     [Header("Refs")]
     // 이 클래스가 있다고 가정
     public OscTransport transport;
+    public RemotePlayerManager remotePlayerManager;
 
     int _seq;
     float _hbTimer;
     const float HeartbeatInterval = 2f;
-    readonly Dictionary<string, long> _lastSeen = new(); // id -> ts
+
+    // 개선된 참가자 관리 시스템
+    readonly Dictionary<string, PlayerInfo> _players = new Dictionary<string, PlayerInfo>();
 
     // 호스트 전용: 준비 완료 상태를 저장
     readonly HashSet<string> _readyClients = new();
@@ -28,6 +32,7 @@ public class NetSession : MonoBehaviour
     void Start()
     {
         if (transport == null) transport = GetComponent<OscTransport>();
+        if (remotePlayerManager == null) remotePlayerManager = GetComponent<RemotePlayerManager>();
         transport.OnRawMessage += HandleRaw;
 
         // [통합 로직 추가] EmergencyStop이 로컬 발동 시 네트워크에 전송하도록 구독
@@ -50,6 +55,8 @@ public class NetSession : MonoBehaviour
         {
             _hbTimer = 0;
             SendPing();
+            // 정기적으로 끊긴 플레이어 정리
+            CleanupDisconnectedPlayers();
         }
         // 호스트는 일정 시간 이상 활동 없는 클라이언트 목록을 정리할 수도 있음
         // if (role == NodeRole.Host) CleanupInactiveClients();
@@ -84,6 +91,7 @@ public class NetSession : MonoBehaviour
 
         if (msg == null || string.IsNullOrEmpty(msg.path)) return;
 
+
         // ping/pong 메시지를 제외한 모든 메시지에 대해 마지막 활동 시간 업데이트
         if (msg.path != "/net/ping" && msg.path != "/net/pong")
         {
@@ -96,21 +104,23 @@ public class NetSession : MonoBehaviour
                 if (role == NodeRole.Host)
                 {
                     // 간단 검증(코드 일치만)
-                    if (msg.reason == sessionCode)
-                    {
-                        _lastSeen[msg.id] = msg.ts; // join은 생존 신호로 간주
+
                         SendReady(msg.id);
                     }
                 }
                 break;
 
             case "/session/ready":
-                if (role == NodeRole.Host)
-                {
+
+                // 클라이언트도 다른 클라이언트의 ready 상태를 받을 수 있음
+                if (_players.ContainsKey(msg.id)) {
+                    _players[msg.id].isReady = true;
                     Debug.Log($"Client ready: {msg.id}");
-                    // [개선] 준비 완료 클라이언트 목록에 추가
-                    _readyClients.Add(msg.id);
-                    // 모든 클라이언트가 준비되었는지 체크
+                }
+
+                if (role == NodeRole.Host) {
+                    // 3명 모두 준비되었는지 체크
+
                     if (AllReady()) BroadcastStart();
                 }
                 else if (role == NodeRole.Client)
@@ -154,67 +164,109 @@ public class NetSession : MonoBehaviour
                     int bonus = (correct == 3) ? 20 : (correct == 2) ? 5 : (correct == 1) ? 0 : -5;
                     SendPpeConfirm(msg.id, correct, bonus);
 
-                    // [개선] PPE 완료 클라이언트 목록에 추가
-                    _ppeDoneClients.Add(msg.id);
-                    if (AllPpeDone()) BroadcastStart();
+
+                    // PPE 선택 완료로 표시
+                    if (_players.ContainsKey(msg.id)) {
+                        _players[msg.id].ppeDone = true;
+                        _players[msg.id].ppeCorrect = correct;
+                        _players[msg.id].ppeBonus = bonus;
+                    }
+
+                    if (AllPpeDone()) BroadcastStart(); // 3명 완료 시 시작
+
                 }
                 break;
 
             case "/ppe/confirm":
-                // 클라이언트: 호스트로부터 PPE 채점 결과를 받음
-                Debug.Log($"PPE Confirm received for {msg.id}. Correct: {msg.correctCount}, Bonus: {msg.bonus}");
+
+                // 클라이언트가 자신의 PPE 결과를 받음
+                if (_players.ContainsKey(msg.id)) {
+                    _players[msg.id].ppeDone = true;
+                    _players[msg.id].ppeCorrect = msg.correctCount;
+                    _players[msg.id].ppeBonus = msg.bonus;
+                    Debug.Log($"PPE Confirmed for {msg.id}: {msg.correctCount} correct, {msg.bonus} bonus");
+                }
+
+                // PPE 결과 이벤트 발생 (UI 업데이트용)
+                GameSignals.PpeConfirmed?.Invoke(msg.id, msg.correctCount, msg.bonus);
                 break;
 
             case "/emergency/stop":
-                // [통합 로직] 네트워크 정지 신호를 EmergencyStop 모듈에 전달
-                Debug.LogError($"Network Emergency Stop received from: {msg.id}, Reason: {msg.reason}");
-                EmergencyStop.HandleNetworkStop(msg.id);
-                break;
-
-            case "/interlock/status":
-                // 클라이언트: 게이트/손/양손 센서 상태를 보냄
-                if (role == NodeRole.Host)
-                {
-                    if (msg.ints != null && msg.ints.Length >= 3)
-                    {
-                        // ints[0]=gate, ints[1]=hand, ints[2]=dual
-                        Interlocks.UpdatePlayer(msg.id, msg.ints[0], msg.ints[1], msg.ints[2]);
-                    }
+                // 즉시 공유(호스트/클라 모두)
+                if (role == NodeRole.Host) {
+                    Broadcast(json);
                 }
+                GameSignals.EmergencyStop?.Invoke(msg.id, msg.reason);
+
                 break;
 
             case "/pose":
                 // 포즈 갱신(렌더러/아바타에 반영)
+                Vector3 pos = new Vector3(msg.px, msg.py, msg.pz);
+                Quaternion rot = new Quaternion(msg.qx, msg.qy, msg.qz, msg.qw);
+
+                if (_players.ContainsKey(msg.id)) {
+                    _players[msg.id].UpdatePose(pos, rot);
+                }
+
+                // 아바타 매니저에 업데이트
+                if (remotePlayerManager != null) {
+                    remotePlayerManager.UpdatePlayerPose(msg.id, pos, rot);
+                }
                 break;
         }
     }
 
-    /// <summary>
-    /// 최근 10초 내 활동한 '준비 완료' 클라이언트가 2명 이상인지 확인 (데모 로직)
-    /// </summary>
-    bool AllReady()
-    {
-        if (role == NodeRole.Client) return false;
 
-        // 데모: 최근 10초 내 ping을 보낸 유저 중 _readyClients에 포함된 유저가 2명 이상
-        int aliveAndReady = 0;
-        long now = OscMessage.NowMs();
-        foreach (var kv in _lastSeen)
-            if (now - kv.Value < 10000 && _readyClients.Contains(kv.Key))
-                aliveAndReady++;
+    bool AllReady() {
+        // 살아있는 플레이어 중 모두 Ready 상태인지 확인
+        var alivePlayers = _players.Values.Where(p => p.IsAlive()).ToList();
 
-        // Host를 제외한 클라이언트 2명 이상이 준비되어야 함
-        return aliveAndReady >= 2;
+        // Host 포함 최소 3명이 있어야 함
+        if (alivePlayers.Count < 2) return false; // Host + 최소 2명의 Client
+
+        // 모든 살아있는 플레이어가 Ready 상태여야 함
+        return alivePlayers.All(p => p.isReady);
+    }
+
+    bool AllPpeDone() {
+        // 살아있는 플레이어 중 모두 PPE 완료 상태인지 확인
+        var alivePlayers = _players.Values.Where(p => p.IsAlive()).ToList();
+
+        // Host 포함 최소 3명이 있어야 함
+        if (alivePlayers.Count < 2) return false; // Host + 최소 2명의 Client
+
+        // 모든 살아있는 플레이어가 PPE 완료 상태여야 함
+        return alivePlayers.All(p => p.ppeDone);
     }
 
     /// <summary>
-    /// 모든 클라이언트가 PPE를 완료했는지 확인 (데모 로직)
+    /// 특정 플레이어 정보 가져오기
     /// </summary>
-    bool AllPpeDone()
-    {
-        if (role == NodeRole.Client) return false;
-        // 데모: _ppeDoneClients에 2명 이상이 완료 보고를 해야 함
-        return _ppeDoneClients.Count >= 2;
+    public PlayerInfo GetPlayer(string playerId) {
+        return _players.TryGetValue(playerId, out PlayerInfo player) ? player : null;
+    }
+
+    /// <summary>
+    /// 살아있는 모든 플레이어 목록 가져오기
+    /// </summary>
+    public List<PlayerInfo> GetAlivePlayers() {
+        return _players.Values.Where(p => p.IsAlive()).ToList();
+    }
+
+    /// <summary>
+    /// 연결이 끊긴 플레이어 정리
+    /// </summary>
+    public void CleanupDisconnectedPlayers() {
+        var disconnected = _players.Where(kvp => !kvp.Value.IsAlive()).Select(kvp => kvp.Key).ToList();
+        foreach (var playerId in disconnected) {
+            Debug.Log($"Player disconnected: {playerId}");
+            if (remotePlayerManager != null) {
+                remotePlayerManager.RemoveAvatar(playerId);
+            }
+            _players.Remove(playerId);
+        }
+
     }
 
     void BroadcastStart()
