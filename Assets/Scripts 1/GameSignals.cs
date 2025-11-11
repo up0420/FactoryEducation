@@ -1,18 +1,25 @@
-// ÀÌ ½ºÅ©¸³Æ®´Â ´Ù¸¥ ½ºÅ©¸³Æ®µéÀÌ °øÅëÀ¸·Î »ç¿ëÇÒ ÀÌº¥Æ®¸¦ Á¤ÀÇÇÕ´Ï´Ù.
 
 using System;
 
+/// <summary>
+/// NetSessionï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½È£ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½.
+/// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+/// </summary>
 public static class GameSignals
 {
-    // NetSession.cs (59¹øÂ° ÁÙ)¿¡¼­ È£ÃâµÊ
-    // °ÔÀÓ ¼¼¼ÇÀÌ ½ÃÀÛµÉ ¶§ ÀÌº¥Æ®¸¦ ¾Ë¸²
+
+    // Called from NetSession.cs when game session starts
     public static Action SessionStart;
 
-    // NetSession.cs (80¹øÂ° ÁÙ)¿¡¼­ È£ÃâµÊ
-    // ºñ»ó Á¤Áö(Emergency Stop)°¡ ¹ß»ıÇßÀ» ¶§, 
-    // Á¤Áö¸¦ ¿äÃ»ÇÑ ID¿Í ÀÌÀ¯(reason)¸¦ ÇÔ²² Àü´Ş
+    // Called from NetSession.cs when Emergency Stop occurs
+    // Parameters: playerId, reason
     public static Action<string, string> EmergencyStop;
 
-    // ÇÊ¿äÇÏ´Ù¸é ¿©±â¿¡ ´Ù¸¥ °ÔÀÓ ÀÌº¥Æ®¸¦ Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.
-    // ¿¹½Ã: public static Action<int> ScoreUpdated;
+    // Called from NetSession.cs when PPE selection is confirmed
+    // Parameters: playerId, correctCount, bonus
+    public static Action<string, int, int> PpeConfirmed;
+
+    // Add more game events here if needed
+    // Example: public static Action<int> ScoreUpdated;
 }
+
