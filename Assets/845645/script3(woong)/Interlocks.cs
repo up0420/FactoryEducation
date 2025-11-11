@@ -16,7 +16,7 @@ public class Interlocks : MonoBehaviour
     private static string lastIntrusionPlayer;
 
     // NetSession 인스턴스를 저장 (클라이언트 모드에서 호스트에게 상태 전송용)
-    private static NetSession netSession;
+    private static NetSession1 netSession;
 
     public static string GetLastHandIntrusionPlayer() => lastIntrusionPlayer;
 
@@ -30,7 +30,7 @@ public class Interlocks : MonoBehaviour
     void Start()
     {
         // NetSession 찾기 (클라이언트 모드에서 상태 전송용)
-        netSession = FindObjectOfType<NetSession>();
+        netSession = FindObjectOfType<NetSession1>();
     }
 
     /// <summary>
