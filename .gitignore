@@ -76,3 +76,4 @@ crashlytics-build.properties
 Assets/Prefab/press.fbx.meta
 Assets/Scripts/NetSession.cs
 Assets/Scripts/NetSession.cs
+Assets/Scripts 1/GameSignals.cs
