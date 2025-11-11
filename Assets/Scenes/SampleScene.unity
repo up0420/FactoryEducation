@@ -443,8 +443,9 @@ GameObject:
   - component: {fileID: 2000799700}
   - component: {fileID: 2000799699}
   - component: {fileID: 2000799701}
+  - component: {fileID: 2000799702}
   m_Layer: 0
-  m_Name: Net
+  m_Name: NetworkManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -465,7 +466,7 @@ MonoBehaviour:
   listenPort: 9000
   sendPort: 9000
   hostIp: 192.168.0.10
-  broadcast: 0
+  broadcast: 1
 --- !u!4 &2000799700
 Transform:
   m_ObjectHideFlags: 0
@@ -493,6 +494,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f4c31af984e821449cb3190f8d3c7a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetSession
+  role: 0
+  myId: hmd-01
+  sessionCode: 000000
+  transport: {fileID: 2000799699}
+  remotePlayerManager: {fileID: 0}
+--- !u!114 &2000799702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000799698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe60da99aa3996449685ab83d6c4687, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RemotePlayerManager
+  avatarPrefabs:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  positionSmoothing: 10
+  rotationSmoothing: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
