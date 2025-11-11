@@ -4241,7 +4241,6 @@ GameObject:
   m_Component:
   - component: {fileID: 327823790}
   - component: {fileID: 327823789}
-  - component: {fileID: 327823791}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -4329,35 +4328,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &327823791
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 327823788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
 --- !u!1001 &328285785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4946,63 +4916,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 435596, guid: 6a53f0c8427bc2d49b828aa97154ab08, type: 3}
   m_PrefabInstance: {fileID: 606875749}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &364264667
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -11.492954
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -1.55
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -73.861244
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
-      propertyPath: m_Name
-      value: "\u0440\u0440\u0440\u0440"
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 0379927c122cfe74cbe1e34078b5a3b7, type: 3}
 --- !u!1 &367976096
 GameObject:
   m_ObjectHideFlags: 0
@@ -27833,4 +27746,3 @@ SceneRoots:
   - {fileID: 1520604274}
   - {fileID: 10291026}
   - {fileID: 753181109}
-  - {fileID: 364264667}
