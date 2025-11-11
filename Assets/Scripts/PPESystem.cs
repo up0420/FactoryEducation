@@ -1,77 +1,76 @@
 using UnityEngine;
-using UnityEngine.UI; // Button을 사용하기 위해 필요
+using UnityEngine.UI; // Button 사용
 using System.Collections.Generic;
 
-// 이 스크립트는 OscTransport와 HUDController가 씬에 있다고 가정
-[RequireComponent(typeof(OscTransport))]
+// 이 스크립트는 HUDController가 같이 있다고 가정
 [RequireComponent(typeof(HUDController))]
 public class PPESystem : MonoBehaviour
 {
     [Header("PPE Candidates (5 Buttons)")]
-    // Inspector에서 5개의 UI 버튼을 순서대로 연결
     public Button[] ppeButtons;
 
     [Header("Scoring Rules")]
-    public int correctBonus = 20;  // 3/3 정답 보너스
-    public int timeBonus = 5;      // 시간 보너스
-    public float timeLimit = 30.0f; // 시간 보너스 제한 (30초)
+    public float timeLimit = 45.0f; // 시간 보너스 제한 (45초)
+
+    [Header("Audio Cues")]
+    public AudioClip selectSound;  // 선택 시 사운드
+    public AudioClip correctSound; // 정답 사운드
+    public AudioClip wrongSound;   // 오답 사운드
+    private AudioSource audioSource;
 
     // --- 내부 변수 ---
-    private OscTransport transport; // 네트워크 전송 담당
     private HUDController hud;      // UI 피드백 담당
+                                    // private NetSession1 netSession; // (A. 호스트) 역할 스크립트 참조
 
     private HashSet<int> selectedIndices = new HashSet<int>();
-    // PPE 정답 세트 (0=헬멧, 1=보안경, 3=안전화) - 프로젝트 계획서 기준 예시
-    private readonly HashSet<int> correctSet = new HashSet<int> { 0, 1, 3 };
-
     private bool isLocked = false;  // 선택이 확정되었는지
     private float selectStartTime;  // 선택 시작 시간
 
     void Start()
     {
-        // 컴포넌트들을 가져옴
-        transport = GetComponent<OscTransport>();
         hud = GetComponent<HUDController>();
+        audioSource = gameObject.AddComponent<AudioSource>();
 
-        // 5개의 버튼에 각각 클릭 이벤트를 연결
+        // 씬에서 NetSession1 찾기 (A 역할)
+        // netSession = FindObjectOfType<NetSession1>();
+
         for (int i = 0; i < ppeButtons.Length; i++)
         {
-            int buttonIndex = i; // (중요) 람다에서 클로저 문제를 피하기 위해 인덱스를 복사
+            int buttonIndex = i;
             ppeButtons[buttonIndex].onClick.AddListener(() => OnSelectButton(buttonIndex));
         }
 
-        // 선택 시작
+        // (SafetyGate가 활성화되면 이 함수를 호출한다고 가정)
+        // StartPPESelection(); 
+    }
+
+    // SafetyGate가 호출해주는 함수
+    public void StartPPESelection()
+    {
+        this.gameObject.SetActive(true);
         selectStartTime = Time.time;
         hud.ShowToast("훈련 시작: 보호구 3개를 선택하세요.", Color.cyan);
     }
 
     void OnSelectButton(int index)
     {
-        if (isLocked) return; // 선택이 확정되면 아무것도 하지 않음
+        if (isLocked) return;
 
         if (selectedIndices.Contains(index))
         {
-            // 이미 선택된 것을 다시 클릭: 선택 해제
             selectedIndices.Remove(index);
-            hud.ShowToast($"선택 해제: {ppeButtons[index].name}", Color.gray);
         }
         else
         {
-            // 3개 미만일 때만 새로 선택 가능
             if (selectedIndices.Count < 3)
             {
                 selectedIndices.Add(index);
-                hud.ShowToast($"선택: {ppeButtons[index].name}", Color.white);
-            }
-            else
-            {
-                hud.ShowToast("최대 3개까지 선택할 수 있습니다.", Color.yellow);
+                PlaySound(selectSound);
             }
         }
 
-        UpdateButtonVisuals(); // 버튼 색상 업데이트
+        UpdateButtonVisuals();
 
-        // 3개를 모두 선택했다면 즉시 확정
         if (selectedIndices.Count == 3)
         {
             ConfirmSelection();
@@ -80,53 +79,72 @@ public class PPESystem : MonoBehaviour
 
     void UpdateButtonVisuals()
     {
-        // (간단한 예시) 선택된 버튼의 색상 변경
         for (int i = 0; i < ppeButtons.Length; i++)
         {
             var colors = ppeButtons[i].colors;
-            if (selectedIndices.Contains(i))
-                colors.normalColor = Color.green; // 선택됨
-            else
-                colors.normalColor = Color.white; // 선택 안 됨
-
+            colors.normalColor = selectedIndices.Contains(i) ? Color.green : Color.white;
             ppeButtons[i].colors = colors;
         }
     }
 
+    // 선택 확정 및 호스트에게 전송
     void ConfirmSelection()
     {
-        isLocked = true; // 선택 잠금
+        isLocked = true;
         float elapsed = Time.time - selectStartTime;
 
-        // 1. 채점
-        int correctCount = 0;
-        foreach (int index in selectedIndices)
+        hud.ShowToast("선택 완료. 호스트의 채점 결과를 기다립니다...", Color.white);
+
+        // (A. 호스트) 역할:
+        // 이 스크립트는 정답을 모릅니다.
+        // 선택한 인덱스 목록(selectedIndices)과 소요 시간(elapsed)을
+        // 호스트(NetSession1)에게 전송해야 합니다.
+
+        // if (netSession != null)
+        //     netSession.SendPPESelection(selectedIndices, elapsed);
+
+        Debug.Log($"[PPESystem] 선택 확정. 호스트에게 전송: {string.Join(",", selectedIndices)} (소요시간: {elapsed}초)");
+
+        // --- 테스트용 임시 코드 (나중에 삭제) ---
+        // (A. 호스트)가 응답했다고 가정
+        int testCorrectCount = 2; // (임시) 2개 정답
+        int testTotalScore = 5;   // (임시) 5점 획득
+        OnReceiveScoreResult(testCorrectCount, testTotalScore, false);
+        // ------------------------------------
+    }
+
+    // (A. 호스트)가 채점 결과를 보내주면 이 함수를 호출
+    public void OnReceiveScoreResult(int correctCount, int totalScore, bool allCorrect)
+    {
+        // 공유해주신 HUDController의 ShowResult 함수에 맞게 호출
+        hud.ShowResult(correctCount, totalScore);
+
+        if (allCorrect)
         {
-            if (correctSet.Contains(index))
-                correctCount++;
+            PlaySound(correctSound);
+        }
+        else
+        {
+            PlaySound(wrongSound);
         }
 
-        int score = 0;
-        if (correctCount == 3) score += correctBonus;
-        else if (correctCount == 2) score += 5;
-        else if (correctCount == 0) score -= 5;
+        Debug.Log("채점 완료. 다른 참가자 대기 중...");
+    }
 
-        // 2. 시간 보너스 채점
-        if (elapsed < timeLimit)
+    // (A. 호스트)가 "모두 준비 완료, 게임 시작!" 신호를 보내면 호출
+    public void OnReceiveGameStart()
+    {
+        hud.ShowToast("모든 참가자 준비 완료. 프레스 훈련을 시작합니다.", Color.cyan);
+        // hud.HideResult(); // (HUDController에 이 함수가 없으므로 주석 처리)
+
+        this.gameObject.SetActive(false);
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource && clip)
         {
-            score += timeBonus;
+            audioSource.PlayOneShot(clip);
         }
-
-        // 3. UI 피드백
-        hud.ShowResult(correctCount, score);
-
-        // 4. 네트워크로 결과 전송 (OscTransport 사용)
-        // 전송할 데이터를 JSON 형태로 만듦 (간단한 예시)
-        string jsonPayload = $"{{ \"type\": \"ppeResult\", \"correct\": {correctCount}, \"score\": {score} }}";
-
-        // OscTransport의 SendJson 함수로 전송
-        transport.SendJson(jsonPayload);
-
-        Debug.Log($"[PPESystem] 결과 전송: {jsonPayload}");
     }
 }
