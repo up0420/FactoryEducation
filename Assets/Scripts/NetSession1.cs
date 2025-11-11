@@ -2,10 +2,17 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Net; // IPEndPoint를 사용하기 위해 필요
 
+public enum NodeRole
+{
+    Host,
+    Client,
+    Unknown
+}
 // OscTransport 스크립트가 반드시 같이 있어야 함
 [RequireComponent(typeof(OscTransport))]
 public class NetSession1 : MonoBehaviour
 {
+
     // 씬에 있는 모든 플레이어 아바타(PlayerSync)의 목록
     // Key: 플레이어 ID (예: "Player_1"), Value: 해당 플레이어의 PlayerSync 스크립트
     public Dictionary<string, PlayerSync> playerList = new Dictionary<string, PlayerSync>();
@@ -20,7 +27,11 @@ public class NetSession1 : MonoBehaviour
         // OscTransport가 메시지를 받으면(OnRawMessage) -> NetSession이 처리(OnMessageReceived)
         transport.OnRawMessage += OnMessageReceived;
     }
+    [Header("Session Role")]
+    public NodeRole role = NodeRole.Host; // 기본값을 Host로 설정 (테스트용)
+    // ▲▲▲ 여기까지 ▲▲▲
 
+    
     // OscTransport가 원시 메시지(JSON)를 받았을 때 호출됨
     private void OnMessageReceived(string jsonMessage, IPEndPoint remote)
     {
