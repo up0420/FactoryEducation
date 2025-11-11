@@ -1,9 +1,13 @@
-// This script defines global events for inter-script communication.
 
 using System;
 
+/// <summary>
+/// NetSession���� ���Ǵ� ���� �̺�Ʈ ��ȣ �����̳�.
+/// ���� ���� ���� ����� �� �̺�Ʈ�� �����մϴ�.
+/// </summary>
 public static class GameSignals
 {
+
     // Called from NetSession.cs when game session starts
     public static Action SessionStart;
 
@@ -18,3 +22,4 @@ public static class GameSignals
     // Add more game events here if needed
     // Example: public static Action<int> ScoreUpdated;
 }
+
