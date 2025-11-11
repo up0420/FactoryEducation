@@ -74,6 +74,9 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 Assets/Prefab/press.fbx.meta
+<<<<<<< HEAD
 Assets/Scripts/NetSession.cs
 Assets/Scripts/NetSession.cs
 Assets/Scripts 1/GameSignals.cs
+=======
+>>>>>>> parent of 5efffce (ㄴㄴ)
