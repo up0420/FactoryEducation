@@ -24,7 +24,7 @@ public class PressFSM : MonoBehaviour
     public bool isHost = true;
 
     private ScoringEngine scoringEngine;
-    private NetSession netSession; // NetSession 참조 추가
+    private NetSession1 netSession; // NetSession 참조 추가
 
     void Awake()
     {
@@ -33,7 +33,7 @@ public class PressFSM : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         scoringEngine = FindObjectOfType<ScoringEngine>();
-        netSession = FindObjectOfType<NetSession>();
+        netSession = FindObjectOfType<NetSession1>();
     }
 
     void Start()
