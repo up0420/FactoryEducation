@@ -2,12 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Net; // IPEndPoint를 사용하기 위해 필요
 
-public enum NodeRole
-{
-    Host,
-    Client,
-    Unknown
-}
+
 // OscTransport 스크립트가 반드시 같이 있어야 함
 [RequireComponent(typeof(OscTransport))]
 public class NetSession1 : MonoBehaviour
