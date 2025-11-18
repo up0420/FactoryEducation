@@ -1,47 +1,49 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Net; // IPEndPoint¸¦ »ç¿ëÇÏ±â À§ÇØ ÇÊ¿ä
+using System.Net; // IPEndPointï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½
 
 
-// OscTransport ½ºÅ©¸³Æ®°¡ ¹Ýµå½Ã °°ÀÌ ÀÖ¾î¾ß ÇÔ
+
+// OscTransport ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ýµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ ï¿½ï¿½
+
 [RequireComponent(typeof(OscTransport))]
 public class NetSession1 : MonoBehaviour
 {
 
-    // ¾À¿¡ ÀÖ´Â ¸ðµç ÇÃ·¹ÀÌ¾î ¾Æ¹ÙÅ¸(PlayerSync)ÀÇ ¸ñ·Ï
-    // Key: ÇÃ·¹ÀÌ¾î ID (¿¹: "Player_1"), Value: ÇØ´ç ÇÃ·¹ÀÌ¾îÀÇ PlayerSync ½ºÅ©¸³Æ®
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Æ¹ï¿½Å¸(PlayerSync)ï¿½ï¿½ ï¿½ï¿½ï¿½
+    // Key: ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ID (ï¿½ï¿½: "Player_1"), Value: ï¿½Ø´ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ PlayerSync ï¿½ï¿½Å©ï¿½ï¿½Æ®
     public Dictionary<string, PlayerSync> playerList = new Dictionary<string, PlayerSync>();
 
-    private OscTransport transport; // ³×Æ®¿öÅ© Åë½Å ´ã´ç
+    private OscTransport transport; // ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 
     void Awake()
     {
-        // OscTransport ÄÄÆ÷³ÍÆ®¸¦ °¡Á®¿È
+        // OscTransport ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         transport = GetComponent<OscTransport>();
 
-        // OscTransport°¡ ¸Þ½ÃÁö¸¦ ¹ÞÀ¸¸é(OnRawMessage) -> NetSessionÀÌ Ã³¸®(OnMessageReceived)
+        // OscTransportï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(OnRawMessage) -> NetSessionï¿½ï¿½ Ã³ï¿½ï¿½(OnMessageReceived)
         transport.OnRawMessage += OnMessageReceived;
     }
     [Header("Session Role")]
-    public NodeRole role = NodeRole.Host; // ±âº»°ªÀ» Host·Î ¼³Á¤ (Å×½ºÆ®¿ë)
-    // ¡ã¡ã¡ã ¿©±â±îÁö ¡ã¡ã¡ã
+    public NodeRole role = NodeRole.Host; // ï¿½âº»ï¿½ï¿½ï¿½ï¿½ Hostï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½×½ï¿½Æ®ï¿½ï¿½)
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
     
-    // OscTransport°¡ ¿ø½Ã ¸Þ½ÃÁö(JSON)¸¦ ¹Þ¾ÒÀ» ¶§ È£ÃâµÊ
+    // OscTransportï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½(JSON)ï¿½ï¿½ ï¿½Þ¾ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½ï¿½
     private void OnMessageReceived(string jsonMessage, IPEndPoint remote)
     {
-        // ÀÌ °÷¿¡¼­ JSON ¸Þ½ÃÁö¸¦ ºÐ¼®(ÆÄ½Ì)ÇØ¼­
-        // "ÀÌ°Ç À§Ä¡ Á¤º¸´Ù", "ÀÌ°Ç PPE Á¡¼ö´Ù" µîÀ» ÆÇ´ÜÇÏ°í
-        // ¿Ã¹Ù¸¥ ÇÃ·¹ÀÌ¾î¿¡°Ô Àü´ÞÇØ¾ß ÇÕ´Ï´Ù.
+        // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ JSON ï¿½Þ½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¼ï¿½(ï¿½Ä½ï¿½)ï¿½Ø¼ï¿½
+        // "ï¿½Ì°ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", "ï¿½Ì°ï¿½ PPE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ï¿½Ï°ï¿½
+        // ï¿½Ã¹Ù¸ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
 
-        // (°£´ÜÇÑ ¿¹½Ã) JSONÀ» ÆÄ½ÌÇØ¼­ id¿Í pos, rot¸¦ Ã£¾Ò´Ù°í °¡Á¤
+        // (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) JSONï¿½ï¿½ ï¿½Ä½ï¿½ï¿½Ø¼ï¿½ idï¿½ï¿½ pos, rotï¿½ï¿½ Ã£ï¿½Ò´Ù°ï¿½ ï¿½ï¿½ï¿½ï¿½
         // if (messageType == "/pose")
         // {
         //     string id = "Player_2"; 
         //     Vector3 pos = new Vector3(1, 0, 0);
         //     Quaternion rot = Quaternion.identity;
         //     
-        //     // ÇØ´ç ÇÃ·¹ÀÌ¾î¸¦ Ã£¾Æ¼­ À§Ä¡ °»½Å
+        //     // ï¿½Ø´ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¸¦ Ã£ï¿½Æ¼ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
         //     if (playerList.TryGetValue(id, out PlayerSync player))
         //     {
         //         player.OnPoseUpdate(pos, rot);
@@ -49,24 +51,24 @@ public class NetSession1 : MonoBehaviour
         // }
     }
 
-    // PlayerSync ½ºÅ©¸³Æ®°¡ "³» À§Ä¡/È¸Àü Á¤º¸"¸¦ º¸³¾ ¶§ È£Ãâ
+    // PlayerSync ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ "ï¿½ï¿½ ï¿½ï¿½Ä¡/È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½
     public void SendPose(Vector3 pos, Quaternion rot)
     {
-        // ÀÌ Á¤º¸¸¦ JSONÀ¸·Î ¸¸µé¾î¼­ OscTransport·Î Àü¼Û
-        // ¿¹: string json = $"{{ \"type\": \"/pose\", \"pos\": ... }}";
+        // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ JSONï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½î¼­ OscTransportï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        // ï¿½ï¿½: string json = $"{{ \"type\": \"/pose\", \"pos\": ... }}";
         // transport.SendJson(json);
 
-        // (Áö±ÝÀº ·ÎÄÃ Å×½ºÆ®¿ë)
+        // (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×½ï¿½Æ®ï¿½ï¿½)
         // Debug.Log($"Sending Pose: {pos}");
     }
 
-    // PlayerSync ½ºÅ©¸³Æ®°¡ ¾À¿¡ ³ªÅ¸³µÀ» ¶§ ÀÚ½ÅÀ» µî·ÏÇÏ±â À§ÇØ È£Ãâ
+    // PlayerSync ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½
     public void RegisterPlayer(string id, PlayerSync player)
     {
         if (!playerList.ContainsKey(id))
         {
             playerList.Add(id, player);
-            Debug.Log($"[NetSession] Player {id}°¡ µî·ÏµÇ¾ú½À´Ï´Ù.");
+            Debug.Log($"[NetSession] Player {id}ï¿½ï¿½ ï¿½ï¿½ÏµÇ¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
         }
     }
 }
