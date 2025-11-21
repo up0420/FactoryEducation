@@ -2000,6 +2000,145 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 1a5f2b92e3d507a438173f443b67a160, type: 3}
   m_PrefabInstance: {fileID: 121767608}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &137787522
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 137787526}
+  - component: {fileID: 137787525}
+  - component: {fileID: 137787524}
+  - component: {fileID: 137787523}
+  - component: {fileID: 137787527}
+  m_Layer: 0
+  m_Name: Sphere
+  m_TagString: PlayerHand
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!135 &137787523
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137787522}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &137787524
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137787522}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &137787525
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137787522}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &137787526
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137787522}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -13, y: 1.37, z: -26.09}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &137787527
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 137787522}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 126
+  m_CollisionDetection: 0
 --- !u!1001 &139021784
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3391,6 +3530,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6342111081073558208, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7981139175114907753, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00313
+      objectReference: {fileID: 0}
+    - target: {fileID: 7981139175114907753, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0162
+      objectReference: {fileID: 0}
     - target: {fileID: 8460085173768229524, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
       propertyPath: m_LocalPosition.x
       value: -13.17
@@ -3435,7 +3586,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: PressStartButton
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6342111081073558208, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -3448,6 +3600,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9089269040227108910, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
       insertIndex: -1
       addedObject: {fileID: 242439676}
+    - targetCorrespondingSourceObject: {fileID: 9089269040227108910, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 242439679}
   m_SourcePrefab: {fileID: 100100000, guid: c9bad5171b9e40845ac9199dc5e61238, type: 3}
 --- !u!1 &242439674 stripped
 GameObject:
@@ -3469,7 +3624,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -3512,13 +3667,13 @@ MonoBehaviour:
   onButtonPressed:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 242439674}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 0
+      - m_Target: {fileID: 491869045}
+        m_TargetAssemblyTypeName: PressController, Assembly-CSharp
+        m_MethodName: StartPressRepeat
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -3530,6 +3685,39 @@ MonoBehaviour:
   pressedColor: {r: 0, g: 1, b: 0, a: 1}
   pressDistance: 0.1
   pressDuration: 0.5
+  rayDistance: 10
+--- !u!54 &242439679
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 242439674}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 126
+  m_CollisionDetection: 0
+--- !u!4 &242718472 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3212515261366272305, guid: 68a6f0c2fc331224386433bd1ab76eb0, type: 3}
+  m_PrefabInstance: {fileID: 491869037}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &247159722
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7169,6 +7357,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 68a6f0c2fc331224386433bd1ab76eb0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 491869041}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 68a6f0c2fc331224386433bd1ab76eb0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 491869045}
   m_SourcePrefab: {fileID: 100100000, guid: 68a6f0c2fc331224386433bd1ab76eb0, type: 3}
 --- !u!1 &491869038 stripped
 GameObject:
@@ -7209,6 +7400,24 @@ MonoBehaviour:
   statusText: {fileID: 0}
   pressZoneTrigger: {fileID: 0}
   currentState: 0
+--- !u!114 &491869045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 491869038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a8db1b9e95e57144971c71af659283c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PressController
+  pressHead: {fileID: 242718472}
+  upYOffset: 1.4
+  downYOffset: -1.4
+  moveSpeed: 2
+  repeatDuration: 10
+  cycleTime: 2
 --- !u!1001 &491898946
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30877,3 +31086,4 @@ SceneRoots:
   - {fileID: 1947622556}
   - {fileID: 491869037}
   - {fileID: 242439673}
+  - {fileID: 137787526}
