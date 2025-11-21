@@ -23,8 +23,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     public GameObject lobbyUI;
     public GameObject gameUI;
 
+    [Header("Spawn Settings")]
+    public Transform[] spawnPoints; // 3개의 스폰 포인트
+    public GameObject vrPlayerPrefab; // VR 플레이어 프리팹 (Camera Rig)
+
     // 현재 접속된 플레이어 수
     private int currentPlayerCount = 0;
+    private GameObject spawnedPlayer;
 
     public enum GamePhase
     {
@@ -146,11 +151,55 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (lobbyUI != null) lobbyUI.SetActive(false);
         if (gameUI != null) gameUI.SetActive(true);
 
+        // VR 플레이어 스폰
+        SpawnVRPlayer();
+
         // VideoManager에게 영상 재생 신호
         VideoManager videoManager = FindObjectOfType<VideoManager>();
         if (videoManager != null)
         {
             videoManager.PlaySafetyVideo();
+        }
+    }
+
+    /// <summary>
+    /// VR 플레이어 스폰
+    /// </summary>
+    void SpawnVRPlayer()
+    {
+        if (spawnedPlayer != null)
+        {
+            Debug.LogWarning("[GameManager] 플레이어가 이미 스폰되었습니다.");
+            return;
+        }
+
+        // 플레이어 번호에 따라 스폰 위치 결정 (1, 2, 3)
+        int playerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogError("[GameManager] 스폰 포인트가 설정되지 않았습니다!");
+            return;
+        }
+
+        // 스폰 포인트 선택 (범위 체크)
+        int spawnIndex = Mathf.Clamp(playerIndex, 0, spawnPoints.Length - 1);
+        Transform spawnPoint = spawnPoints[spawnIndex];
+
+        Debug.Log($"[GameManager] 플레이어 {playerIndex + 1} 스폰: {spawnPoint.position}");
+
+        // VR 플레이어 스폰
+        if (vrPlayerPrefab != null)
+        {
+            spawnedPlayer = PhotonNetwork.Instantiate(
+                vrPlayerPrefab.name,
+                spawnPoint.position,
+                spawnPoint.rotation
+            );
+        }
+        else
+        {
+            Debug.LogError("[GameManager] VR 플레이어 프리팹이 설정되지 않았습니다!");
         }
     }
 
