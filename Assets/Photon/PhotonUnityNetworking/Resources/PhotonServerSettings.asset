@@ -53,6 +53,8 @@ MonoBehaviour:
   - StartPhase2
   - SyncPhase
   - RPC_ButtonPressed
+  - RPC_SpawnPlayers
+  - RPC_StartGame
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

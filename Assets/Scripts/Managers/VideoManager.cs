@@ -124,14 +124,20 @@ public class VideoManager : MonoBehaviourPun
             videoDisplay.gameObject.SetActive(false);
         }
 
-        // 플레이어 이동 해제
-        LockAllPlayers(false);
+        // 플레이어 이동 해제 (나중에 스폰 후 다시 설정)
+        // LockAllPlayers(false);
 
-        // Phase 3 (보호구 선택)으로 전환
-        if (PhotonNetwork.IsMasterClient)
+        // GameManager에 영상 종료 알림 (플레이어 스폰)
+        if (GameManager.Instance != null && PhotonNetwork.IsMasterClient)
         {
-            GameManager.Instance.ChangePhase(GameManager.GamePhase.EquipmentSelection);
+            GameManager.Instance.OnVideoFinished();
         }
+
+        // Phase 3 (보호구 선택)으로 전환 - 주석 처리 (스폰 후 진행)
+        // if (PhotonNetwork.IsMasterClient)
+        // {
+        //     GameManager.Instance.ChangePhase(GameManager.GamePhase.EquipmentSelection);
+        // }
     }
 
     /// <summary>

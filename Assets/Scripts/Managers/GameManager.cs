@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // 현재 접속된 플레이어 수
     private int currentPlayerCount = 0;
     private GameObject spawnedPlayer;
+    private PhotonView photonView;
 
     public enum GamePhase
     {
@@ -52,6 +53,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Destroy(gameObject);
             return;
+        }
+
+        // PhotonView 컴포넌트 가져오기
+        photonView = GetComponent<PhotonView>();
+        if (photonView == null)
+        {
+            Debug.LogError("[GameManager] PhotonView 컴포넌트가 없습니다! GameManager에 PhotonView를 추가하세요.");
         }
     }
 
@@ -82,23 +90,27 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 자동으로 방 생성 또는 참가
         RoomOptions roomOptions = new RoomOptions
         {
-            MaxPlayers = MAX_PLAYERS,
+            MaxPlayers = 3, // 명시적으로 3명 설정
             IsVisible = true,
             IsOpen = true
         };
+
+        Debug.Log($"[GameManager] 방 설정 - MaxPlayers: {roomOptions.MaxPlayers}");
 
         PhotonNetwork.JoinOrCreateRoom("SafetyTrainingRoom", roomOptions, TypedLobby.Default);
     }
 
     public override void OnJoinedRoom()
     {
-        Debug.Log($"[GameManager] 방 입장 완료. 플레이어 수: {PhotonNetwork.CurrentRoom.PlayerCount}/{MAX_PLAYERS}");
+        Debug.Log($"[GameManager] 방 입장 완료. 플레이어 수: {PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}");
+        Debug.Log($"[GameManager] 방 이름: {PhotonNetwork.CurrentRoom.Name}");
+        Debug.Log($"[GameManager] 내 ActorNumber: {PhotonNetwork.LocalPlayer.ActorNumber}");
 
         currentPlayerCount = PhotonNetwork.CurrentRoom.PlayerCount;
         UpdatePlayerCountUI();
 
-        // 3명이 모두 접속했는지 확인
-        CheckAllPlayersReady();
+        // 자동 시작 제거 - 수동 시작 버튼으로 변경
+        // CheckAllPlayersReady();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -108,8 +120,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         currentPlayerCount = PhotonNetwork.CurrentRoom.PlayerCount;
         UpdatePlayerCountUI();
 
-        // 3명이 모두 접속했는지 확인
-        CheckAllPlayersReady();
+        // 자동 시작 제거
+        // CheckAllPlayersReady();
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
@@ -118,6 +130,16 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         currentPlayerCount = PhotonNetwork.CurrentRoom.PlayerCount;
         UpdatePlayerCountUI();
+    }
+
+    public override void OnJoinRoomFailed(short returnCode, string message)
+    {
+        Debug.LogError($"[GameManager] 방 입장 실패! 코드: {returnCode}, 메시지: {message}");
+    }
+
+    public override void OnCreateRoomFailed(short returnCode, string message)
+    {
+        Debug.LogError($"[GameManager] 방 생성 실패! 코드: {returnCode}, 메시지: {message}");
     }
 
     #endregion
@@ -130,15 +152,90 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    /// <summary>
+    /// 게임 시작 (아무나 호출 가능)
+    /// </summary>
+    public void StartGame()
+    {
+        if (currentPhase != GamePhase.Lobby)
+        {
+            Debug.LogWarning("[GameManager] 이미 게임이 시작되었습니다.");
+            return;
+        }
+
+        Debug.Log("[GameManager] 게임 시작 버튼 클릭!");
+
+        // 모든 클라이언트에게 게임 시작 신호 전송
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_StartGame", RpcTarget.All);
+        }
+        else
+        {
+            Debug.LogError("[GameManager] PhotonView가 null입니다! 게임 시작 실패");
+        }
+    }
+
+    [PunRPC]
+    void RPC_StartGame()
+    {
+        Debug.Log("[GameManager] 게임 시작!");
+        currentPhase = GamePhase.VideoEducation;
+
+        // UI 전환
+        if (lobbyUI != null) lobbyUI.SetActive(false);
+        if (gameUI != null) gameUI.SetActive(true);
+
+        // VideoManager에게 영상 재생 신호
+        VideoManager videoManager = FindObjectOfType<VideoManager>();
+        if (videoManager != null)
+        {
+            videoManager.PlaySafetyVideo();
+        }
+        else
+        {
+            Debug.LogError("[GameManager] VideoManager를 찾을 수 없습니다!");
+        }
+    }
+
     void CheckAllPlayersReady()
     {
+        // 더 이상 사용하지 않음 - 수동 시작으로 변경
         if (currentPlayerCount == MAX_PLAYERS && PhotonNetwork.IsMasterClient)
         {
             Debug.Log("[GameManager] 모든 플레이어 준비 완료! Phase 2로 전환");
 
             // 모든 클라이언트에게 Phase 2 시작 신호 전송
-            photonView.RPC("StartPhase2", RpcTarget.All);
+            if (photonView != null)
+            {
+                photonView.RPC("StartPhase2", RpcTarget.All);
+            }
+            else
+            {
+                Debug.LogError("[GameManager] PhotonView가 null입니다! RPC 호출 실패");
+            }
         }
+    }
+
+    /// <summary>
+    /// 영상 종료 후 호출됨
+    /// </summary>
+    public void OnVideoFinished()
+    {
+        Debug.Log("[GameManager] 영상 종료 - 플레이어 스폰");
+
+        // 영상 종료 후 프레스 앞으로 스폰
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_SpawnPlayers", RpcTarget.All);
+        }
+    }
+
+    [PunRPC]
+    void RPC_SpawnPlayers()
+    {
+        Debug.Log("[GameManager] 플레이어 스폰 시작");
+        SpawnVRPlayer();
     }
 
     [PunRPC]
@@ -151,10 +248,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (lobbyUI != null) lobbyUI.SetActive(false);
         if (gameUI != null) gameUI.SetActive(true);
 
-        // VR 플레이어 스폰
-        SpawnVRPlayer();
-
-        // VideoManager에게 영상 재생 신호
+        // 영상 재생 (스폰은 영상 후)
         VideoManager videoManager = FindObjectOfType<VideoManager>();
         if (videoManager != null)
         {
@@ -214,7 +308,14 @@ public class GameManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        photonView.RPC("SyncPhase", RpcTarget.All, (int)newPhase);
+        if (photonView != null)
+        {
+            photonView.RPC("SyncPhase", RpcTarget.All, (int)newPhase);
+        }
+        else
+        {
+            Debug.LogError("[GameManager] PhotonView가 null입니다! ChangePhase RPC 호출 실패");
+        }
     }
 
     [PunRPC]
