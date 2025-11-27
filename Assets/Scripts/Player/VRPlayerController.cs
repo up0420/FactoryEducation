@@ -120,6 +120,12 @@ public class VRPlayerController : MonoBehaviourPun
 
     void ApplyGravity()
     {
+        // CharacterController가 활성화되어 있을 때만 실행
+        if (characterController == null || !characterController.enabled)
+        {
+            return;
+        }
+
         if (characterController.isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
