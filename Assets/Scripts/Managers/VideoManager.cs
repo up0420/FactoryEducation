@@ -12,6 +12,7 @@ public class VideoManager : MonoBehaviourPun
     [Header("Video Player")]
     public VideoPlayer videoPlayer;
     public RawImage videoDisplay;
+    public GameObject videoCanvas; // VideoCanvas 전체를 참조
 
     [Header("Video Settings")]
     public string videoFileName = "SafetyEducation.mp4";
@@ -55,8 +56,13 @@ public class VideoManager : MonoBehaviourPun
             Debug.Log($"[VideoManager] 영상 경로 설정: {videoPath}");
         }
 
-        // 초기 상태: 비디오 UI 비활성화
-        if (videoDisplay != null)
+        // 초기 상태: VideoCanvas 전체 비활성화
+        if (videoCanvas != null)
+        {
+            videoCanvas.SetActive(false);
+            Debug.Log("[VideoManager] VideoCanvas 초기 비활성화");
+        }
+        else if (videoDisplay != null)
         {
             videoDisplay.gameObject.SetActive(false);
         }
@@ -84,8 +90,13 @@ public class VideoManager : MonoBehaviourPun
         // 모든 플레이어 이동 잠금
         LockAllPlayers(true);
 
-        // UI 표시
-        if (videoDisplay != null)
+        // VideoCanvas 전체 활성화
+        if (videoCanvas != null)
+        {
+            videoCanvas.SetActive(true);
+            Debug.Log("[VideoManager] VideoCanvas 활성화");
+        }
+        else if (videoDisplay != null)
         {
             videoDisplay.gameObject.SetActive(true);
         }
@@ -118,8 +129,13 @@ public class VideoManager : MonoBehaviourPun
 
         isVideoPlaying = false;
 
-        // UI 숨기기
-        if (videoDisplay != null)
+        // VideoCanvas 전체 숨기기
+        if (videoCanvas != null)
+        {
+            videoCanvas.SetActive(false);
+            Debug.Log("[VideoManager] VideoCanvas 비활성화");
+        }
+        else if (videoDisplay != null)
         {
             videoDisplay.gameObject.SetActive(false);
         }
