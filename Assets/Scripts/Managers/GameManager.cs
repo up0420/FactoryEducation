@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     [Header("Spawn Settings")]
     public Transform[] spawnPoints; // 3개의 스폰 포인트
-    public GameObject vrPlayerPrefab; // VR 플레이어 프리팹 (Camera Rig)
+    public GameObject[] vrPlayerPrefabs; // 플레이어별 VR 프리팹 배열 (0: Player1, 1: Player2, 2: Player3)
 
     // 현재 접속된 플레이어 수
     private int currentPlayerCount = 0;
@@ -224,17 +224,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("[GameManager] 영상 종료 - 플레이어 스폰");
 
-        // 영상 종료 후 프레스 앞으로 스폰
-        if (photonView != null)
-        {
-            photonView.RPC("RPC_SpawnPlayers", RpcTarget.All);
-        }
-    }
-
-    [PunRPC]
-    void RPC_SpawnPlayers()
-    {
-        Debug.Log("[GameManager] 플레이어 스폰 시작");
+        // 각 클라이언트가 자신의 플레이어만 스폰 (RPC 제거)
         SpawnVRPlayer();
     }
 
@@ -282,18 +272,55 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         Debug.Log($"[GameManager] 플레이어 {playerIndex + 1} 스폰: {spawnPoint.position}");
 
-        // VR 플레이어 스폰
-        if (vrPlayerPrefab != null)
+        // 플레이어별 VR 프리팹 선택
+        if (vrPlayerPrefabs == null || vrPlayerPrefabs.Length == 0)
         {
+            Debug.LogError("[GameManager] VR 플레이어 프리팹 배열이 설정되지 않았습니다!");
+            return;
+        }
+
+        // ActorNumber에 맞는 프리팹 선택 (1->0, 2->1, 3->2)
+        int prefabIndex = Mathf.Clamp(playerIndex, 0, vrPlayerPrefabs.Length - 1);
+        GameObject selectedPrefab = vrPlayerPrefabs[prefabIndex];
+
+        if (selectedPrefab != null)
+        {
+            Debug.Log($"[GameManager] 플레이어 {playerIndex + 1} - 프리팹: {selectedPrefab.name}");
+
             spawnedPlayer = PhotonNetwork.Instantiate(
-                vrPlayerPrefab.name,
+                selectedPrefab.name,
                 spawnPoint.position,
                 spawnPoint.rotation
             );
+
+            // 로비 카메라 비활성화 (게임 카메라로 전환)
+            DisableLobbyCameraRig();
         }
         else
         {
-            Debug.LogError("[GameManager] VR 플레이어 프리팹이 설정되지 않았습니다!");
+            Debug.LogError($"[GameManager] VR 플레이어 프리팹 [{prefabIndex}]이 null입니다!");
+        }
+    }
+
+    /// <summary>
+    /// 로비 카메라 비활성화 (VRPlayer 스폰 후 호출)
+    /// </summary>
+    void DisableLobbyCameraRig()
+    {
+        GameObject lobbyCameraRig = GameObject.Find("LobbyCameraRig");
+        if (lobbyCameraRig == null)
+        {
+            lobbyCameraRig = GameObject.Find("[BuildingBlock] Camera Rig");
+        }
+
+        if (lobbyCameraRig != null)
+        {
+            lobbyCameraRig.SetActive(false);
+            Debug.Log("[GameManager] 로비 카메라 비활성화");
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] 로비 카메라를 찾을 수 없습니다!");
         }
     }
 

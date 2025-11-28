@@ -41,7 +41,27 @@ public class VRPlayerController : MonoBehaviourPun
         {
             // 원격 플레이어는 이동 처리 안 함
             enabled = false;
+
+            // 원격 플레이어의 Camera Rig는 비활성화 (내 화면에서 안 보이게)
+            Transform cameraRig = transform.Find("[BuildingBlock] Camera Rig");
+            if (cameraRig != null)
+            {
+                // 카메라와 컨트롤러는 비활성화 (아바타 몸통만 보이게)
+                Camera remoteCamera = cameraRig.GetComponentInChildren<Camera>();
+                if (remoteCamera != null)
+                {
+                    remoteCamera.gameObject.SetActive(false);
+                }
+            }
             return;
+        }
+
+        // 로컬 플레이어: 자신의 아바타 모델 숨기기
+        Transform avatarBody = transform.Find("AvatarBody");
+        if (avatarBody != null)
+        {
+            avatarBody.gameObject.SetActive(false);
+            Debug.Log("[VRPlayerController] 로컬 플레이어 아바타 숨김");
         }
 
         // VR 컨트롤러 초기화
