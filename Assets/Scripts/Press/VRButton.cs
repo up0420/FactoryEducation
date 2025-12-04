@@ -1,12 +1,15 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.XR;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using Photon.Pun;
 
 /// <summary>
-/// VR에서 눌릴 수 있는 3D 버튼
-/// VR 컨트롤러로 버튼을 가리키고 A버튼(Primary Button)을 누르면 작동
+/// VR에서 눌릴 수 있는 3D 버튼 (XR Interaction Toolkit 기반)
+/// XRRayInteractor로 가리키고 Trigger/Grip 버튼을 누르면 작동
 /// </summary>
+[RequireComponent(typeof(XRSimpleInteractable))]
 public class VRButton : MonoBehaviourPun
 {
     [Header("Button Settings")]
@@ -22,18 +25,25 @@ public class VRButton : MonoBehaviourPun
     public float pressDistance = 0.1f;
     public float pressDuration = 0.5f;
 
-    [Header("VR Controller Settings")]
-    [Tooltip("VR 컨트롤러가 버튼을 가리킬 수 있는 최대 거리")]
-    public float rayDistance = 10f;
-
     private Vector3 originalPosition;
     private bool isPressed = false;
     private Material buttonMaterial;
-    private bool isHovering = false;
+    private XRSimpleInteractable interactable;
 
-    // VR 컨트롤러 입력
-    private InputDevice rightController;
-    private InputDevice leftController;
+    void Awake()
+    {
+        // XRSimpleInteractable 컴포넌트 가져오기 또는 추가
+        interactable = GetComponent<XRSimpleInteractable>();
+        if (interactable == null)
+        {
+            interactable = gameObject.AddComponent<XRSimpleInteractable>();
+        }
+
+        // 이벤트 리스너 등록
+        interactable.hoverEntered.AddListener(OnHoverEnter);
+        interactable.hoverExited.AddListener(OnHoverExit);
+        interactable.selectEntered.AddListener(OnSelectEnter);
+    }
 
     void Start()
     {
@@ -42,10 +52,7 @@ public class VRButton : MonoBehaviourPun
         // 버튼 렌더러 자동으로 찾기
         if (buttonRenderer == null)
         {
-            // 1. 현재 GameObject에서 찾기
             buttonRenderer = GetComponent<Renderer>();
-
-            // 2. 없으면 자식 오브젝트에서 찾기
             if (buttonRenderer == null)
             {
                 buttonRenderer = GetComponentInChildren<Renderer>();
@@ -68,151 +75,42 @@ public class VRButton : MonoBehaviourPun
             buttonMaterial.color = normalColor;
         }
 
-        // VR 컨트롤러 초기화
-        InitializeControllers();
-    }
-
-    void Update()
-    {
-        // VR 컨트롤러 입력 체크
-        CheckVRInput();
+        Debug.Log("[VRButton] XR Interaction Toolkit 기반 버튼 초기화 완료");
     }
 
     /// <summary>
-    /// VR 컨트롤러 초기화
+    /// XR Ray Interactor가 버튼 위에 올라왔을 때
     /// </summary>
-    void InitializeControllers()
+    void OnHoverEnter(HoverEnterEventArgs args)
     {
-        var rightHandDevices = new System.Collections.Generic.List<InputDevice>();
-        var leftHandDevices = new System.Collections.Generic.List<InputDevice>();
-
-        InputDevices.GetDevicesAtXRNode(XRNode.RightHand, rightHandDevices);
-        InputDevices.GetDevicesAtXRNode(XRNode.LeftHand, leftHandDevices);
-
-        if (rightHandDevices.Count > 0)
-            rightController = rightHandDevices[0];
-
-        if (leftHandDevices.Count > 0)
-            leftController = leftHandDevices[0];
-    }
-
-    /// <summary>
-    /// VR 컨트롤러 입력 체크 (Ray + A버튼)
-    /// </summary>
-    void CheckVRInput()
-    {
-        // 컨트롤러가 유효하지 않으면 다시 초기화
-        if (!rightController.isValid || !leftController.isValid)
-        {
-            InitializeControllers();
-        }
-
-        // 오른손 컨트롤러 체크
-        CheckControllerRaycast(rightController, XRNode.RightHand);
-
-        // 왼손 컨트롤러 체크
-        CheckControllerRaycast(leftController, XRNode.LeftHand);
-    }
-
-    /// <summary>
-    /// 컨트롤러에서 Ray를 쏴서 버튼을 가리키고 있는지 체크
-    /// </summary>
-    void CheckControllerRaycast(InputDevice controller, XRNode handNode)
-    {
-        if (!controller.isValid) return;
-
-        // 컨트롤러 위치와 방향 가져오기
-        Vector3 controllerPosition;
-        Quaternion controllerRotation;
-
-        if (controller.TryGetFeatureValue(CommonUsages.devicePosition, out controllerPosition) &&
-            controller.TryGetFeatureValue(CommonUsages.deviceRotation, out controllerRotation))
-        {
-            // 컨트롤러에서 앞으로 Ray 발사
-            Ray ray = new Ray(controllerPosition, controllerRotation * Vector3.forward);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, rayDistance))
-            {
-                // Ray가 이 버튼을 맞췄는지 확인
-                if (hit.collider.gameObject == gameObject || hit.collider.transform.IsChildOf(transform))
-                {
-                    // 버튼에 호버링 중
-                    if (!isHovering)
-                    {
-                        OnHoverEnter();
-                    }
-
-                    // A버튼 (Primary Button) 체크
-                    bool primaryButtonPressed;
-                    if (controller.TryGetFeatureValue(CommonUsages.primaryButton, out primaryButtonPressed))
-                    {
-                        if (primaryButtonPressed && !isPressed)
-                        {
-                            PressButton();
-                        }
-                    }
-                }
-                else
-                {
-                    // 다른 오브젝트를 가리킴
-                    if (isHovering)
-                    {
-                        OnHoverExit();
-                    }
-                }
-            }
-            else
-            {
-                // Ray가 아무것도 맞추지 못함
-                if (isHovering)
-                {
-                    OnHoverExit();
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// 버튼 위에 마우스/컨트롤러가 올라왔을 때
-    /// </summary>
-    void OnHoverEnter()
-    {
-        isHovering = true;
-
         if (buttonMaterial != null && !isPressed)
         {
             buttonMaterial.color = hoverColor;
         }
 
-        Debug.Log("[VRButton] 버튼 호버링 시작");
+        Debug.Log($"[VRButton] 버튼 호버링 시작 (Interactor: {args.interactorObject})");
     }
 
     /// <summary>
-    /// 버튼에서 마우스/컨트롤러가 벗어났을 때
+    /// XR Ray Interactor가 버튼에서 벗어났을 때
     /// </summary>
-    void OnHoverExit()
+    void OnHoverExit(HoverExitEventArgs args)
     {
-        isHovering = false;
-
         if (buttonMaterial != null && !isPressed)
         {
             buttonMaterial.color = normalColor;
         }
 
-        Debug.Log("[VRButton] 버튼 호버링 종료");
+        Debug.Log($"[VRButton] 버튼 호버링 종료 (Interactor: {args.interactorObject})");
     }
 
     /// <summary>
-    /// VR 컨트롤러가 버튼에 닿았을 때
+    /// XR Ray Interactor가 버튼을 선택(클릭)했을 때
     /// </summary>
-    void OnTriggerEnter(Collider other)
+    void OnSelectEnter(SelectEnterEventArgs args)
     {
-        // VR 손 또는 컨트롤러인지 확인
-        if (other.CompareTag("PlayerHand") && !isPressed)
-        {
-            PressButton();
-        }
+        Debug.Log($"[VRButton] 버튼 선택됨 (Interactor: {args.interactorObject})");
+        PressButton();
     }
 
     /// <summary>
@@ -239,9 +137,9 @@ public class VRButton : MonoBehaviourPun
         onButtonPressed?.Invoke();
 
         // 마스터 클라이언트에게 알림 (네트워크 동기화)
-        if (PhotonNetwork.IsConnected)
+        if (PhotonNetwork.IsConnected && photonView != null)
         {
-            photonView.RPC("RPC_ButtonPressed", RpcTarget.All);
+            photonView.RPC("RPC_ButtonPressed", RpcTarget.Others); // 자기 자신은 이미 눌렀으니 Others만
         }
 
         // 일정 시간 후 버튼 복구
@@ -283,6 +181,19 @@ public class VRButton : MonoBehaviourPun
         Debug.Log("[VRButton] 버튼 복구");
     }
 
+    void OnDestroy()
+    {
+        // 이벤트 리스너 해제 (메모리 누수 방지)
+        if (interactable != null)
+        {
+            interactable.hoverEntered.RemoveListener(OnHoverEnter);
+            interactable.hoverExited.RemoveListener(OnHoverExit);
+            interactable.selectEntered.RemoveListener(OnSelectEnter);
+        }
+    }
+
+    // ==================== 에디터 테스트용 기능 (마우스 클릭) ====================
+    
     /// <summary>
     /// 마우스 hover (에디터 테스트용)
     /// </summary>

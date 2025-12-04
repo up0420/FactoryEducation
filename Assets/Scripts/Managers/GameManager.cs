@@ -61,6 +61,27 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError("[GameManager] PhotonView 컴포넌트가 없습니다! GameManager에 PhotonView를 추가하세요.");
         }
+
+        // [자동 설정] WorkPoint와 SpectatorPoint가 없으면 생성
+        if (workPoint == null)
+        {
+            GameObject wp = new GameObject("WorkPoint");
+            // 프레스 기계 앞 (예상 좌표, 필요시 수정)
+            wp.transform.position = new Vector3(0f, 0f, -20f); 
+            wp.transform.rotation = Quaternion.Euler(0, 180, 0); // 뒤를 보게? 앞을 보게? (일단 180)
+            workPoint = wp.transform;
+            Debug.Log("[GameManager] WorkPoint 자동 생성됨");
+        }
+
+        if (spectatorPoint == null)
+        {
+            GameObject sp = new GameObject("SpectatorPoint");
+            // 작업 위치를 내려다보는 높은 곳
+            sp.transform.position = new Vector3(0f, 3f, -25f); 
+            sp.transform.LookAt(workPoint); // 작업 위치를 바라봄
+            spectatorPoint = sp.transform;
+            Debug.Log("[GameManager] SpectatorPoint 자동 생성됨");
+        }
     }
 
     void Start()
@@ -222,10 +243,25 @@ public class GameManager : MonoBehaviourPunCallbacks
     /// </summary>
     public void OnVideoFinished()
     {
-        Debug.Log("[GameManager] 영상 종료 - 플레이어 스폰");
+        Debug.Log("[GameManager] 영상 종료 - 퀴즈 시스템 시작");
 
-        // 각 클라이언트가 자신의 플레이어만 스폰 (RPC 제거)
-        SpawnVRPlayer();
+        // [수정] QuizManager에게 퀴즈 시작 알림
+        QuizManager quizManager = FindObjectOfType<QuizManager>();
+        if (quizManager != null)
+        {
+            quizManager.StartQuizSystem();
+        }
+        else
+        {
+            Debug.LogError("[GameManager] QuizManager를 찾을 수 없습니다!");
+        }
+
+        // [기존 TurnManager 코드 주석 처리]
+        // TurnManager turnManager = FindObjectOfType<TurnManager>();
+        // if (turnManager != null)
+        // {
+        //     turnManager.StartTurnSystem();
+        // }
     }
 
     [PunRPC]
@@ -238,7 +274,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (lobbyUI != null) lobbyUI.SetActive(false);
         if (gameUI != null) gameUI.SetActive(true);
 
-        // 영상 재생 (스폰은 영상 후)
+        // 영상 재생
         VideoManager videoManager = FindObjectOfType<VideoManager>();
         if (videoManager != null)
         {
@@ -246,82 +282,70 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    [Header("Turn System Settings")]
+    public Transform workPoint;      // 작업 위치 (프레스 앞)
+    public Transform spectatorPoint; // 관전 위치
+
     /// <summary>
-    /// VR 플레이어 스폰
+    /// 턴 업데이트: 플레이어 위치 이동 및 권한 설정
     /// </summary>
-    void SpawnVRPlayer()
+    public void UpdateTurn(int activePlayerIndex)
     {
-        if (spawnedPlayer != null)
+        int localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        GameObject lobbyCameraRig = GetLobbyCameraRig();
+
+        if (lobbyCameraRig == null)
         {
-            Debug.LogWarning("[GameManager] 플레이어가 이미 스폰되었습니다.");
+            Debug.LogError("[GameManager] LobbyCameraRig를 찾을 수 없습니다!");
             return;
         }
 
-        // 플레이어 번호에 따라 스폰 위치 결정 (1, 2, 3)
-        int playerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
-
-        if (spawnPoints == null || spawnPoints.Length == 0)
+        if (localPlayerIndex == activePlayerIndex)
         {
-            Debug.LogError("[GameManager] 스폰 포인트가 설정되지 않았습니다!");
-            return;
-        }
-
-        // 스폰 포인트 선택 (범위 체크)
-        int spawnIndex = Mathf.Clamp(playerIndex, 0, spawnPoints.Length - 1);
-        Transform spawnPoint = spawnPoints[spawnIndex];
-
-        Debug.Log($"[GameManager] 플레이어 {playerIndex + 1} 스폰: {spawnPoint.position}");
-
-        // 플레이어별 VR 프리팹 선택
-        if (vrPlayerPrefabs == null || vrPlayerPrefabs.Length == 0)
-        {
-            Debug.LogError("[GameManager] VR 플레이어 프리팹 배열이 설정되지 않았습니다!");
-            return;
-        }
-
-        // ActorNumber에 맞는 프리팹 선택 (1->0, 2->1, 3->2)
-        int prefabIndex = Mathf.Clamp(playerIndex, 0, vrPlayerPrefabs.Length - 1);
-        GameObject selectedPrefab = vrPlayerPrefabs[prefabIndex];
-
-        if (selectedPrefab != null)
-        {
-            Debug.Log($"[GameManager] 플레이어 {playerIndex + 1} - 프리팹: {selectedPrefab.name}");
-
-            spawnedPlayer = PhotonNetwork.Instantiate(
-                selectedPrefab.name,
-                spawnPoint.position,
-                spawnPoint.rotation
-            );
-
-            // 로비 카메라 비활성화 (게임 카메라로 전환)
-            DisableLobbyCameraRig();
+            // [작업자] 프레스 앞으로 이동
+            Debug.Log($"[GameManager] 당신은 작업자입니다. 작업 위치로 이동: {workPoint.position}");
+            TeleportPlayer(lobbyCameraRig, workPoint);
+            SetPlayerControl(true); // 조작 활성화
         }
         else
         {
-            Debug.LogError($"[GameManager] VR 플레이어 프리팹 [{prefabIndex}]이 null입니다!");
+            // [관전자] 관전석으로 이동
+            Debug.Log($"[GameManager] 당신은 관전자입니다. 관전 위치로 이동: {spectatorPoint.position}");
+            TeleportPlayer(lobbyCameraRig, spectatorPoint);
+            SetPlayerControl(false); // 조작 비활성화 (얼음)
         }
     }
 
-    /// <summary>
-    /// 로비 카메라 비활성화 (VRPlayer 스폰 후 호출)
-    /// </summary>
-    void DisableLobbyCameraRig()
+    void TeleportPlayer(GameObject rig, Transform target)
     {
-        GameObject lobbyCameraRig = GameObject.Find("LobbyCameraRig");
-        if (lobbyCameraRig == null)
-        {
-            lobbyCameraRig = GameObject.Find("[BuildingBlock] Camera Rig");
-        }
+        if (target == null) return;
 
-        if (lobbyCameraRig != null)
-        {
-            lobbyCameraRig.SetActive(false);
-            Debug.Log("[GameManager] 로비 카메라 비활성화");
-        }
-        else
-        {
-            Debug.LogWarning("[GameManager] 로비 카메라를 찾을 수 없습니다!");
-        }
+        // CharacterController 간섭 방지
+        CharacterController cc = rig.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+
+        rig.transform.position = target.position;
+        rig.transform.rotation = target.rotation;
+
+        if (cc != null) cc.enabled = true;
+    }
+
+    void SetPlayerControl(bool isEnabled)
+    {
+        // 이동 제어
+        VRPlayerController mover = FindObjectOfType<VRPlayerController>();
+        if (mover != null) mover.SetMovementLock(!isEnabled);
+
+        // 손 상호작용 제어
+        VRHandInteraction hands = FindObjectOfType<VRHandInteraction>();
+        if (hands != null) hands.SetInteractionEnabled(isEnabled);
+    }
+
+    GameObject GetLobbyCameraRig()
+    {
+        GameObject rig = GameObject.Find("LobbyCameraRig");
+        if (rig == null) rig = GameObject.Find("[BuildingBlock] Camera Rig");
+        return rig;
     }
 
     /// <summary>

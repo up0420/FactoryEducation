@@ -11,8 +11,11 @@ using Photon.Pun;
 public class VRHandInteraction : MonoBehaviourPun
 {
     [Header("VR Controllers")]
-    public XRBaseController leftHandController;
-    public XRBaseController rightHandController;
+    public GameObject leftHandControllerObj;  // [변경] GameObject로 변경 (드래그 앤 드롭 쉽도록)
+    public GameObject rightHandControllerObj; // [변경] GameObject로 변경
+
+    private XRBaseController leftHandController;
+    private XRBaseController rightHandController;
 
     [Header("Hand Transforms")]
     public Transform leftHandTransform;
@@ -32,7 +35,8 @@ public class VRHandInteraction : MonoBehaviourPun
 
     void Start()
     {
-        if (!photonView.IsMine)
+        // [수정] PhotonView가 없으면 (LobbyCameraRig의 경우) 로컬 플레이어로 간주
+        if (photonView != null && !photonView.IsMine)
         {
             enabled = false;
             return;
@@ -42,12 +46,113 @@ public class VRHandInteraction : MonoBehaviourPun
         leftController = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
         rightController = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
 
-        Debug.Log("[VRHandInteraction] VR 손 상호작용 시스템 초기화");
+        // [수정] GameObject에서 컨트롤러 컴포넌트 추출
+        if (leftHandControllerObj != null) leftHandController = leftHandControllerObj.GetComponent<XRBaseController>();
+        if (rightHandControllerObj != null) rightHandController = rightHandControllerObj.GetComponent<XRBaseController>();
+
+        // [수정] 컨트롤러 참조가 비어있으면 자동으로 찾기 (무조건 실행 보장)
+        if (leftHandController == null || rightHandController == null)
+        {
+            XRBaseController[] controllers = GetComponentsInChildren<XRBaseController>();
+            foreach (var controller in controllers)
+            {
+                // 이름으로 왼손/오른손 구분
+                string name = controller.gameObject.name.ToLower();
+                if (name.Contains("left")) 
+                {
+                    leftHandController = controller;
+                    leftHandControllerObj = controller.gameObject;
+                }
+                if (name.Contains("right")) 
+                {
+                    rightHandController = controller;
+                    rightHandControllerObj = controller.gameObject;
+                }
+            }
+        }
+
+        // 리모컨(Ray Interactor) 기능 추가
+        if (leftHandControllerObj != null) SetupRayInteractor(leftHandControllerObj);
+        if (rightHandControllerObj != null) SetupRayInteractor(rightHandControllerObj);
+
+        Debug.Log("[VRHandInteraction] VR 손 상호작용 시스템 초기화 (리모컨 기능 추가됨)");
+
+        // [수정] 손 자체가 레이저를 막지 않도록 레이어 변경 (Ignore Raycast = 2)
+        if (leftHandControllerObj != null) SetLayerRecursively(leftHandControllerObj, 2);
+        if (rightHandControllerObj != null) SetLayerRecursively(rightHandControllerObj, 2);
+    }
+
+    void SetLayerRecursively(GameObject obj, int newLayer)
+    {
+        if (obj == null) return;
+        obj.layer = newLayer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, newLayer);
+        }
+    }
+
+    /// <summary>
+    /// 런타임에 Ray Interactor 및 시각화 컴포넌트 추가
+    /// </summary>
+    void SetupRayInteractor(GameObject controllerObj)
+    {
+        // 0. XRController (Input Provider) 확인 및 추가
+        // Ray Interactor가 작동하려면 입력(클릭 등)을 처리할 컨트롤러 컴포넌트가 필수임
+        XRBaseController xrController = controllerObj.GetComponent<XRBaseController>();
+        if (xrController == null)
+        {
+            // DeviceBased 컨트롤러 추가 (VRPlayerController와 동일한 방식)
+            UnityEngine.XR.Interaction.Toolkit.XRController deviceController = controllerObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.XRController>();
+            
+            // 왼손/오른손 노드 설정
+            if (controllerObj.name.ToLower().Contains("left"))
+                deviceController.controllerNode = XRNode.LeftHand;
+            else
+                deviceController.controllerNode = XRNode.RightHand;
+                
+            Debug.Log($"[VRHandInteraction] {controllerObj.name}에 XRController(DeviceBased) 자동 추가됨");
+        }
+
+        // 1. XRRayInteractor 추가
+        UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rayInteractor = controllerObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>();
+        if (rayInteractor == null)
+        {
+            rayInteractor = controllerObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>();
+        }
+
+        // [수정] 이미 있어도 설정을 강제로 덮어씌움 (중요!)
+        rayInteractor.enableUIInteraction = true; // UI 상호작용 활성화
+        rayInteractor.maxRaycastDistance = 10.0f;
+        rayInteractor.raycastMask = ~0; // 모든 레이어 인식 (UI + 3D 오브젝트)
+
+        // 2. LineRenderer 추가 (시각화)
+        LineRenderer lineRenderer = controllerObj.GetComponent<LineRenderer>();
+        if (lineRenderer == null)
+        {
+            lineRenderer = controllerObj.AddComponent<LineRenderer>();
+            lineRenderer.startWidth = 0.005f;
+            lineRenderer.endWidth = 0.005f;
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default")); // 기본 흰색 재질
+            lineRenderer.startColor = Color.red;
+            lineRenderer.endColor = new Color(1, 0, 0, 0); // 끝은 투명하게
+            lineRenderer.useWorldSpace = true;
+        }
+
+        // 3. XRInteractorLineVisual 추가 (LineRenderer 제어)
+        UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual lineVisual = controllerObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>();
+        if (lineVisual == null)
+        {
+            lineVisual = controllerObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual>();
+            lineVisual.lineWidth = 0.005f;
+            // lineVisual.validColorGradient = ... (기본값 사용)
+        }
     }
 
     void Update()
     {
-        if (!photonView.IsMine) return;
+        // [수정] PhotonView가 없으면 로컬 플레이어로 간주
+        if (photonView != null && !photonView.IsMine) return;
 
         // 컨트롤러 재연결 확인
         if (!leftController.isValid || !rightController.isValid)
@@ -215,6 +320,29 @@ public class VRHandInteraction : MonoBehaviourPun
     public bool IsHolding(bool leftHand)
     {
         return leftHand ? leftHandObject != null : rightHandObject != null;
+    }
+
+    /// <summary>
+    /// 상호작용 활성화/비활성화
+    /// </summary>
+    public void SetInteractionEnabled(bool enabled)
+    {
+        // XRRayInteractor 활성화/비활성화
+        if (leftHandController != null)
+        {
+            var ray = leftHandController.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>();
+            if (ray != null) ray.enabled = enabled;
+        }
+        if (rightHandController != null)
+        {
+            var ray = rightHandController.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>();
+            if (ray != null) ray.enabled = enabled;
+        }
+
+        // 스크립트 자체 활성화/비활성화 (Update 루프 정지)
+        this.enabled = enabled;
+        
+        Debug.Log($"[VRHandInteraction] 상호작용 {(enabled ? "활성화" : "비활성화")}");
     }
 
     /// <summary>

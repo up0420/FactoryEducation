@@ -55,6 +55,9 @@ MonoBehaviour:
   - RPC_ButtonPressed
   - RPC_SpawnPlayers
   - RPC_StartGame
+  - RPC_ForceCrush
+  - RPC_ResetMachine
+  - RPC_ResetScores
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
