@@ -8,6 +8,7 @@ using Photon.Pun;
 /// 프레스 기계 작동 시스템 (Phase 5)
 /// 버튼 클릭 → 5초 카운트다운 → 3초 간격 반복 작동
 /// </summary>
+[RequireComponent(typeof(PhotonView))]
 public class PressMachine : MonoBehaviourPun
 {
     [Header("Press Parts")]
@@ -100,7 +101,14 @@ public class PressMachine : MonoBehaviourPun
         }
 
         // 마스터 클라이언트에게 시작 요청
-        photonView.RPC("RPC_StartCountdown", RpcTarget.All);
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_StartCountdown", RpcTarget.All);
+        }
+        else
+        {
+            Debug.LogWarning("[PressMachine] PhotonView가 없어 시작 요청을 보낼 수 없습니다.");
+        }
     }
 
     [PunRPC]
@@ -130,7 +138,10 @@ public class PressMachine : MonoBehaviourPun
         // 카운트다운 종료 후 프레스 작동 시작
         if (PhotonNetwork.IsMasterClient)
         {
-            photonView.RPC("RPC_StartPress", RpcTarget.All);
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_StartPress", RpcTarget.All);
+            }
         }
     }
 
@@ -238,10 +249,9 @@ public class PressMachine : MonoBehaviourPun
 
         // 안전 감점
         int currentPlayerIndex = TurnManager.Instance.currentPlayerTurn;
-        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
-        if (scoreManager != null && PhotonNetwork.IsMasterClient)
+        if (ScoreManager.Instance != null && PhotonNetwork.IsMasterClient)
         {
-            scoreManager.AddSafetyPenalty(currentPlayerIndex, -100);
+            ScoreManager.Instance.AddSafetyPenalty(currentPlayerIndex, -100);
         }
 
         // 경고 UI 표시
@@ -255,7 +265,10 @@ public class PressMachine : MonoBehaviourPun
     {
         if (PhotonNetwork.IsMasterClient)
         {
-            photonView.RPC("RPC_StopPress", RpcTarget.All);
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_StopPress", RpcTarget.All);
+            }
         }
     }
 
@@ -306,6 +319,85 @@ public class PressMachine : MonoBehaviourPun
             hasHandInside = false;
         }
     }
+
+    #region Quiz System Methods
+
+    /// <summary>
+    /// 퀴즈 시스템용: 강제 크러시 애니메이션 (안전 센서 무시)
+    /// </summary>
+    public void ForceCrush()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_ForceCrush", RpcTarget.All);
+            }
+            else
+            {
+                Debug.LogWarning("[PressMachine] PhotonView가 없어 ForceCrush RPC를 호출할 수 없습니다.");
+            }
+        }
+    }
+
+    [PunRPC]
+    void RPC_ForceCrush()
+    {
+        Debug.Log("[PressMachine] 강제 크러시 실행 (퀴즈용)");
+        StartCoroutine(ForceCrushCoroutine());
+    }
+
+    IEnumerator ForceCrushCoroutine()
+    {
+        // 하강
+        yield return StartCoroutine(MovePressHead(downPosition, "크러시!"));
+
+        // 0.5초 대기 (압착 효과)
+        yield return new WaitForSeconds(0.5f);
+
+        // 상승
+        yield return StartCoroutine(MovePressHead(upPosition, "복귀 중"));
+
+        Debug.Log("[PressMachine] 강제 크러시 완료");
+    }
+
+    /// <summary>
+    /// 퀴즈 시스템용: 프레스 기계 초기화
+    /// </summary>
+    public void ResetMachine()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_ResetMachine", RpcTarget.All);
+            }
+        }
+    }
+
+    [PunRPC]
+    void RPC_ResetMachine()
+    {
+        Debug.Log("[PressMachine] 기계 초기화");
+
+        currentState = PressState.Idle;
+
+        if (operatingCoroutine != null)
+        {
+            StopCoroutine(operatingCoroutine);
+            operatingCoroutine = null;
+        }
+
+        // 프레스 헤드를 상승 위치로 즉시 이동
+        if (pressHead != null)
+        {
+            pressHead.localPosition = new Vector3(initialHeadPosition.x, upPosition, initialHeadPosition.z);
+        }
+
+        UpdateStatusUI("대기 중");
+    }
+
+    #endregion
 
     #region UI Methods
 

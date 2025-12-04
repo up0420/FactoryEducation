@@ -134,7 +134,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5788702647801022299, guid: 4ee24ec3c30f6be4fb750c695e91b66e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.8
+      value: 1.29
       objectReference: {fileID: 0}
     - target: {fileID: 5788702647801022299, guid: 4ee24ec3c30f6be4fb750c695e91b66e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -212,15 +212,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8332738389576900997, guid: b61e68134fbcdf9478aba8d5e1384622, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.17202
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8332738389576900997, guid: b61e68134fbcdf9478aba8d5e1384622, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.024
+      value: 3.57
       objectReference: {fileID: 0}
     - target: {fileID: 8332738389576900997, guid: b61e68134fbcdf9478aba8d5e1384622, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.89005
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8332738389576900997, guid: b61e68134fbcdf9478aba8d5e1384622, type: 3}
       propertyPath: m_LocalRotation.w
@@ -654,7 +654,7 @@ LineRenderer:
   - {x: 0, y: 0, z: 1}
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 1
+    widthMultiplier: 0.005
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -665,8 +665,17 @@ LineRenderer:
         outSlope: 0
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -1242,7 +1251,7 @@ LineRenderer:
   - {x: 0, y: 0, z: 1}
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 1
+    widthMultiplier: 0.005
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -1253,8 +1262,17 @@ LineRenderer:
         outSlope: 0
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4

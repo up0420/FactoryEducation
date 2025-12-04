@@ -8,7 +8,6 @@ using Photon.Pun;
 /// XR Rig 기반, 컨트롤러 조이스틱으로 이동
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(PhotonView))]
 public class VRPlayerController : MonoBehaviourPun
 {
     [Header("Movement Settings")]
@@ -36,8 +35,8 @@ public class VRPlayerController : MonoBehaviourPun
 
     void Start()
     {
-        // 로컬 플레이어가 아니면 비활성화
-        if (!photonView.IsMine)
+        // [수정] PhotonView가 없으면 (LobbyCameraRig의 경우) 로컬 플레이어로 간주
+        if (photonView != null && !photonView.IsMine)
         {
             // 원격 플레이어는 이동 처리 안 함
             enabled = false;
@@ -76,7 +75,8 @@ public class VRPlayerController : MonoBehaviourPun
 
     void Update()
     {
-        if (!photonView.IsMine) return;
+        // [수정] PhotonView가 없으면 로컬 플레이어로 간주
+        if (photonView != null && !photonView.IsMine) return;
 
         // 컨트롤러 재연결 확인
         if (!leftController.isValid || !rightController.isValid)

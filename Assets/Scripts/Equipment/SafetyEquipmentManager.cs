@@ -225,8 +225,8 @@ public class SafetyEquipmentManager : MonoBehaviourPun
 
         playersCompleted++;
 
-        // 모든 플레이어(3명) 완료 체크
-        if (playersCompleted >= GameManager.MAX_PLAYERS && PhotonNetwork.IsMasterClient)
+        // 모든 플레이어(현재 접속 인원) 완료 체크
+        if (playersCompleted >= PhotonNetwork.CurrentRoom.PlayerCount && PhotonNetwork.IsMasterClient)
         {
             Debug.Log("[SafetyEquipmentManager] 모든 플레이어 선택 완료! Phase 4로 전환");
 

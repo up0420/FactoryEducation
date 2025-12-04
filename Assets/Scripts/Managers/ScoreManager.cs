@@ -5,6 +5,7 @@ using Photon.Pun;
 /// <summary>
 /// 플레이어별 점수 관리 시스템
 /// </summary>
+[RequireComponent(typeof(PhotonView))]
 public class ScoreManager : MonoBehaviourPun
 {
     public static ScoreManager Instance { get; private set; }
@@ -81,13 +82,20 @@ public class ScoreManager : MonoBehaviourPun
             Debug.Log($"[ScoreManager] Player {playerIndex} 보호구 점수: {score}");
 
             // 마스터 클라이언트에게 동기화
-            if (PhotonNetwork.IsMasterClient)
+            if (photonView != null)
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, score, 0, 0);
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, score, 0, 0);
+                }
+                else
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, score, 0, 0);
+                }
             }
             else
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, score, 0, 0);
+                Debug.LogWarning("[ScoreManager] PhotonView가 없어 점수 동기화에 실패했습니다.");
             }
         }
     }
@@ -105,13 +113,20 @@ public class ScoreManager : MonoBehaviourPun
             Debug.Log($"[ScoreManager] Player {playerIndex} 작업 점수: {score}");
 
             // 동기화
-            if (PhotonNetwork.IsMasterClient)
+            if (photonView != null)
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, 0, score, 0);
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, 0, score, 0);
+                }
+                else
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, 0, score, 0);
+                }
             }
             else
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, 0, score, 0);
+                Debug.LogWarning("[ScoreManager] PhotonView가 없어 점수 동기화에 실패했습니다.");
             }
         }
     }
@@ -129,13 +144,20 @@ public class ScoreManager : MonoBehaviourPun
             Debug.Log($"[ScoreManager] Player {playerIndex} 안전 감점: {penalty}");
 
             // 동기화
-            if (PhotonNetwork.IsMasterClient)
+            if (photonView != null)
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, 0, 0, penalty);
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.Others, playerIndex, 0, 0, penalty);
+                }
+                else
+                {
+                    photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, 0, 0, penalty);
+                }
             }
             else
             {
-                photonView.RPC("RPC_SyncScore", RpcTarget.MasterClient, playerIndex, 0, 0, penalty);
+                Debug.LogWarning("[ScoreManager] PhotonView가 없어 점수 동기화에 실패했습니다.");
             }
         }
     }
@@ -185,5 +207,28 @@ public class ScoreManager : MonoBehaviourPun
         List<PlayerScore> sortedScores = new List<PlayerScore>(playerScores.Values);
         sortedScores.Sort((a, b) => b.totalScore.CompareTo(a.totalScore));
         return sortedScores;
+    }
+    /// <summary>
+    /// 모든 플레이어 점수 초기화 (재시작용)
+    /// </summary>
+    public void ResetScores()
+    {
+        InitializeScores();
+        
+        // 마스터 클라이언트가 초기화하면 다른 클라이언트도 초기화하도록 RPC 호출
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_ResetScores", RpcTarget.Others);
+            }
+        }
+    }
+
+    [PunRPC]
+    void RPC_ResetScores()
+    {
+        InitializeScores();
+        Debug.Log("[ScoreManager] 점수 리셋됨 (RPC)");
     }
 }

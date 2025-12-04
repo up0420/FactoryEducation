@@ -7,6 +7,7 @@ using Photon.Pun;
 /// 턴제 프레스 작업 시스템 관리
 /// Player 1 → Player 2 → Player 3 순서로 작업
 /// </summary>
+[RequireComponent(typeof(PhotonView))]
 public class TurnManager : MonoBehaviourPun
 {
     public static TurnManager Instance { get; private set; }
@@ -63,7 +64,14 @@ public class TurnManager : MonoBehaviourPun
         }
 
         // 첫 번째 플레이어 턴 시작
-        photonView.RPC("RPC_StartTurn", RpcTarget.All, currentPlayerTurn);
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_StartTurn", RpcTarget.All, currentPlayerTurn);
+        }
+        else
+        {
+            Debug.LogError("[TurnManager] PhotonView가 없어 턴을 시작할 수 없습니다.");
+        }
     }
 
     [PunRPC]
@@ -73,6 +81,12 @@ public class TurnManager : MonoBehaviourPun
 
         Debug.Log($"[TurnManager] Player {playerIndex + 1}의 턴 시작");
 
+        // [추가] 턴 시스템 업데이트 (위치 이동 및 권한 설정)
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UpdateTurn(currentPlayerTurn);
+        }
+
         // UI 업데이트
         UpdateTurnUI();
 
@@ -81,16 +95,10 @@ public class TurnManager : MonoBehaviourPun
         if (localPlayerIndex == currentPlayerTurn)
         {
             ShowTurnNotification("당신의 차례입니다!", Color.green);
-
-            // 플레이어를 작업 구역으로 이동 (선택사항)
-            // MovePlayerToZone(workZone);
         }
         else
         {
             ShowTurnNotification($"Player {currentPlayerTurn + 1}의 차례입니다. 대기해주세요.", Color.yellow);
-
-            // 플레이어를 대기 구역으로 이동 (선택사항)
-            // MovePlayerToZone(waitZone);
         }
 
         // ProductSpawner에게 제품 소재 생성 신호
@@ -148,7 +156,10 @@ public class TurnManager : MonoBehaviourPun
         Debug.Log($"[TurnManager] Player {playerIndex + 1} 성공 카운트: {playerSuccessCount[playerIndex]}/3");
 
         // RPC로 모든 클라이언트에 동기화
-        photonView.RPC("RPC_UpdateSuccessCount", RpcTarget.All, playerIndex, playerSuccessCount[playerIndex]);
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_UpdateSuccessCount", RpcTarget.All, playerIndex, playerSuccessCount[playerIndex]);
+        }
 
         // 3회 성공 시 플레이어 작업 완료
         if (playerSuccessCount[playerIndex] >= 3)
@@ -182,7 +193,10 @@ public class TurnManager : MonoBehaviourPun
         playerCompleted[playerIndex] = true;
 
         // RPC로 모든 클라이언트에 알림
-        photonView.RPC("RPC_PlayerCompleted", RpcTarget.All, playerIndex);
+        if (photonView != null)
+        {
+            photonView.RPC("RPC_PlayerCompleted", RpcTarget.All, playerIndex);
+        }
 
         // 작업 점수 추가 (완료 시 +200점)
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
@@ -192,10 +206,13 @@ public class TurnManager : MonoBehaviourPun
         }
 
         // 다음 플레이어 턴으로 전환
-        if (currentPlayerTurn < GameManager.MAX_PLAYERS - 1)
+        if (currentPlayerTurn < PhotonNetwork.CurrentRoom.PlayerCount - 1)
         {
             currentPlayerTurn++;
-            photonView.RPC("RPC_StartTurn", RpcTarget.All, currentPlayerTurn);
+            if (photonView != null)
+            {
+                photonView.RPC("RPC_StartTurn", RpcTarget.All, currentPlayerTurn);
+            }
         }
         else
         {

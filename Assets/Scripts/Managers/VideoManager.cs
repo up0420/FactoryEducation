@@ -87,8 +87,8 @@ public class VideoManager : MonoBehaviourPun
     {
         Debug.Log("[VideoManager] 안전교육 영상 재생 시작");
 
-        // 모든 플레이어 이동 잠금
-        LockAllPlayers(true);
+        // [수정] 영상 중 자유롭게 돌아다닐 수 있도록 잠금 해제
+        // LockAllPlayers(true);
 
         // VideoCanvas 전체 활성화
         if (videoCanvas != null)
