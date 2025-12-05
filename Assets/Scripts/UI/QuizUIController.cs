@@ -327,4 +327,79 @@ public class QuizUIController : MonoBehaviour
         if (questionPanel != null) questionPanel.SetActive(false);
         if (resultPanel != null) resultPanel.SetActive(false);
     }
+    [Header("Final Scoreboard UI")]
+    public GameObject finalScoreboardPanel;      // Final comprehensive scoreboard (White Canvas)
+    public TextMeshProUGUI[] finalPlayerScores;  // Array for player scores (Player 1, 2, 3...)
+
+    /// <summary>
+    /// Show Individual Result (Intermediate)
+    /// </summary>
+    public void ShowIndividualResult(int playerIndex, int correctCount, int totalQuestions)
+    {
+        // Turn off all other panels and show result panel
+        SetActivePanel(resultPanel);
+        
+        // 1. Enable Scoreboard Panel
+        if (scoreboardPanel != null) scoreboardPanel.SetActive(true);
+        // 2. Set Text
+        int totalScore = correctCount * 10;
+        if (resultText != null)
+        {
+            resultText.gameObject.SetActive(true);
+            resultText.text = $"Player {playerIndex + 1}'s Result";
+        }
+        if (finalScoreText != null)
+        {
+            finalScoreText.text = $"Score: {totalScore}";
+        }
+        if (finalRankText != null)
+        {
+            // Reuse for "Correct Count"
+            finalRankText.gameObject.SetActive(true);
+            finalRankText.text = $"Correct: {correctCount}";
+            finalRankText.color = Color.white; 
+        }
+        // Hide buttons for intermediate result
+        if (restartButton != null) restartButton.gameObject.SetActive(false);
+        if (exitButton != null) exitButton.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Show Final Comprehensive Scoreboard (Game End)
+    /// </summary>
+    public void ShowFinalScoreboard(List<int> allScores)
+    {
+        // Hide all other panels
+        HideAll();
+        
+        // Show Final Scoreboard Panel
+        if (finalScoreboardPanel != null)
+        {
+            finalScoreboardPanel.SetActive(true);
+        }
+        // Display scores for each player
+        for (int i = 0; i < finalPlayerScores.Length; i++)
+        {
+            if (i < allScores.Count && finalPlayerScores[i] != null)
+            {
+                finalPlayerScores[i].text = $"Player {i + 1}: {allScores[i]} Points";
+                finalPlayerScores[i].gameObject.SetActive(true);
+            }
+            else if (finalPlayerScores[i] != null)
+            {
+                finalPlayerScores[i].gameObject.SetActive(false);
+            }
+        }
+        // Enable Restart/Exit buttons
+        if (restartButton != null) 
+        {
+            restartButton.gameObject.SetActive(true);
+            restartButton.transform.SetAsLastSibling(); // Bring to front
+        }
+        if (exitButton != null) 
+        {
+            exitButton.gameObject.SetActive(true);
+            exitButton.transform.SetAsLastSibling();
+        }
+    }
 }

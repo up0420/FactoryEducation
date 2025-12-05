@@ -267,16 +267,9 @@ public class QuizManager : MonoBehaviourPunCallbacks
     /// </summary>
     void ShowIntermediateScoreboard()
     {
-        Debug.Log($"[QuizManager] Player {currentPlayerIndex + 1} 턴 종료. 중간 점수판 표시.");
-
-        // 현재 플레이어의 점수 가져오기
-        int localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        Debug.Log($"[QuizManager] Player {currentPlayerIndex + 1} Turn Ended. Showing Individual Result.");
         
-        // 주의: 현재 턴인 플레이어의 점수를 보여줘야 함 (관전자 입장에서도)
-        // 하지만 UI는 로컬 클라이언트 기준이므로, 로컬 플레이어가 현재 턴인 경우에만 자신의 점수가 의미 있음.
-        // 관전자에게는 "Player X Finished" 같은 메시지가 더 적절할 수 있으나, 
-        // 현재 요구사항은 "점수판이 보이는 것"이므로 ScoreManager에서 현재 턴 플레이어의 점수를 가져와 표시.
-        
+        // Get current player's score
         var playerScore = ScoreManager.Instance.GetPlayerScore(currentPlayerIndex);
         int correctCount = 0;
         if (playerScore != null)
@@ -284,13 +277,13 @@ public class QuizManager : MonoBehaviourPunCallbacks
             correctCount = playerScore.workScore / 10;
         }
 
-        // UI에 중간 결과 표시 (버튼 숨김)
+        // Show Individual Result UI
         if (uiController != null)
         {
-            uiController.ShowFinalResult(correctCount, questionsPerPlayer, true);
+            uiController.ShowIndividualResult(currentPlayerIndex, correctCount, questionsPerPlayer);
         }
 
-        // 5초 후 다음 플레이어 턴으로 이동
+        // Wait 5 seconds, then proceed to next turn
         Invoke(nameof(ProceedToNextTurn), 5f);
     }
 
@@ -308,8 +301,9 @@ public class QuizManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            // 모든 플레이어 완료 -> 최종 결과 화면
-            EndQuizSystem();
+            // All players finished -> Show Final Scoreboard after 3 seconds
+            Debug.Log("[QuizManager] All players finished. Showing Final Scoreboard in 3s.");
+            Invoke(nameof(EndQuizSystem), 3f);
         }
     }
 
@@ -318,22 +312,27 @@ public class QuizManager : MonoBehaviourPunCallbacks
     /// </summary>
     void EndQuizSystem()
     {
-        Debug.Log("[QuizManager] 모든 퀴즈 완료!");
+        Debug.Log("[QuizManager] Showing Final Scoreboard!");
 
-        // 로컬 플레이어의 점수 가져오기 (최종 결과는 내 점수 보여주기)
-        int localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
-        var playerScore = ScoreManager.Instance.GetPlayerScore(localPlayerIndex);
-
-        if (playerScore != null)
+        // Collect all scores
+        List<int> allScores = new List<int>();
+        for (int i = 0; i < GameManager.MAX_PLAYERS; i++)
         {
-            // 점수(10점 단위)를 정답 개수로 변환
-            int correctCount = playerScore.workScore / 10;
-            
-            // UI에 최종 결과 표시 (버튼 표시)
-            if (uiController != null)
+            var score = ScoreManager.Instance.GetPlayerScore(i);
+            if (score != null)
             {
-                uiController.ShowFinalResult(correctCount, questionsPerPlayer, false);
+                allScores.Add(score.workScore);
             }
+            else
+            {
+                allScores.Add(0);
+            }
+        }
+
+        // Show Final Scoreboard UI
+        if (uiController != null)
+        {
+            uiController.ShowFinalScoreboard(allScores);
         }
     }
 
