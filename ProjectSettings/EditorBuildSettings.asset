@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Scenes/Tutorial.unity
+    guid: 1d6a4ee3816f0ea42ad5ca479cb1ea7b
+  - enabled: 1
     path: Assets/Scenes/Scenes/Onegiog.unity
     guid: 4adc0371161f84849b93f67dffafc29a
   m_configObjects:
