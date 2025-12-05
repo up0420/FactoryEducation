@@ -33,6 +33,20 @@ public class PressableObject : MonoBehaviour
         {
             if (beforeModel != null) beforeModel.SetActive(false);
             if (afterModel != null) afterModel.SetActive(true);
+
+            // [추가] 5초 뒤에 원상복구
+            StartCoroutine(ResetModel());
         }
+    }
+
+    // [추가] 5초 대기 후 모델 초기화 코루틴
+    System.Collections.IEnumerator ResetModel()
+    {
+        yield return new WaitForSeconds(5.0f);
+
+        if (beforeModel != null) beforeModel.SetActive(true);
+        if (afterModel != null) afterModel.SetActive(false);
+
+        Debug.Log($"[PressableObject] {name} 모델 원상복구 완료!");
     }
 }

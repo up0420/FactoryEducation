@@ -339,9 +339,27 @@ public class QuizUIController : MonoBehaviour
             finalRankText.text = $"{correctCountLabel}{correctCount}"; // [수정] 변수 사용
             finalRankText.color = correctCountColor; // [수정] 인스펙터 설정 색상 사용
         }
+
+        // [추가] 설명 텍스트 숨기기 (이전 화면의 잔상 제거)
+        if (explanationText != null)
+        {
+            explanationText.text = ""; // 내용 비우기
+            // explanationText.gameObject.SetActive(false); // 필요하다면 비활성화
+        }
+
         // [변경] 중간 점수판에서는 확인 버튼 숨김
         if (confirmButton != null) confirmButton.gameObject.SetActive(false);
     }
+
+    [Header("Final Feedback Settings")]
+    public int successThreshold = 30; // 칭찬 기준 점수
+    public string successMessage = " - 참 잘했어요!";
+    public Color successColor = Color.blue; // [추가] 칭찬 색상
+    public float successFontSize = 60f;     // [추가] 칭찬 폰트 크기
+
+    public string failMessage = " - 노력합시다!";
+    public Color failColor = Color.black;   // [추가] 격려 색상
+    public float failFontSize = 50f;        // [추가] 격려 폰트 크기
 
     /// <summary>
     /// Show Final Comprehensive Scoreboard (Game End)
@@ -361,7 +379,16 @@ public class QuizUIController : MonoBehaviour
         {
             if (i < allScores.Count && finalPlayerScores[i] != null)
             {
-                finalPlayerScores[i].text = $"Player {i + 1}: {allScores[i]} Points";
+                bool isSuccess = allScores[i] >= successThreshold;
+
+                // [수정] 점수에 따라 피드백 문구, 색상, 크기 적용
+                string feedback = isSuccess ? successMessage : failMessage;
+                finalPlayerScores[i].text = $"Player {i + 1}: {allScores[i]} Points{feedback}";
+                
+                // 색상 및 폰트 크기 변경
+                finalPlayerScores[i].color = isSuccess ? successColor : failColor;
+                finalPlayerScores[i].fontSize = isSuccess ? successFontSize : failFontSize;
+
                 finalPlayerScores[i].gameObject.SetActive(true);
             }
             else if (finalPlayerScores[i] != null)
