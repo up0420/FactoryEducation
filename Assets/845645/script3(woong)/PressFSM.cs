@@ -14,17 +14,17 @@ public class PressFSM : MonoBehaviour
     public static event Action<int> OnCycleStart;
     public static event Action<string, int, string, float> OnViolationLogged;
     public static event Action OnAllCyclesComplete;
-    // ÀÌÀü: public static event Action OnSessionStarted; // PPE¿¡¼­ È£Ãâ¿ë
-    // º¯°æ: GameSignals.SessionStart¸¦ ±¸µ¶ÇÏ¿© NetSessionÀ¸·ÎºÎÅÍ ½ÃÀÛ ½ÅÈ£¸¦ ¹ÞÀ½
+    // ï¿½ï¿½ï¿½ï¿½: public static event Action OnSessionStarted; // PPEï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½ï¿½
+    // ï¿½ï¿½ï¿½ï¿½: GameSignals.SessionStartï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ NetSessionï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
     public static PressFSM Instance { get; private set; }
 
-    [Header("ÇÃ·¹ÀÌ¾î Á¤º¸ (NetSession ¾ø¾îµµ µÊ)")]
+    [Header("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ (NetSession ï¿½ï¿½ï¿½îµµ ï¿½ï¿½)")]
     public string playerId = "Player1";
     public bool isHost = true;
 
     private ScoringEngine scoringEngine;
-    private NetSession1 netSession; // NetSession ÂüÁ¶ Ãß°¡
+    private NetSession1 netSession; // NetSession ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
 
     void Awake()
     {
@@ -41,17 +41,17 @@ public class PressFSM : MonoBehaviour
         Interlocks.OnInterlockStatusChanged += CheckSafetyOnInterlockChange;
         EmergencyStop.OnEmergencyStopActivated += HandleEmergencyStop;
 
-        // NetSession ÅëÇÕ: GameSignals¸¦ ÅëÇØ ½ÃÀÛ ½ÅÈ£¸¦ ¹ÞÀ½
+        // NetSession ï¿½ï¿½ï¿½ï¿½: GameSignalsï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         GameSignals.SessionStart += StartPressSequence;
 
-        // NetSessionÀÌ ÀÖÀ» °æ¿ì ÃÊ±â »óÅÂ´Â NetSessionÀÇ ¿ªÇÒ¿¡ µû¶ó ´Þ¶óÁú ¼ö ÀÖÀ½
+        // NetSessionï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½Â´ï¿½ NetSessionï¿½ï¿½ ï¿½ï¿½ï¿½Ò¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¶ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         if (netSession == null || netSession.role == NodeRole.Host)
         {
             if (currentState == PressState.IDLE)
             {
-                // È£½ºÆ®/´ÜÀÏ ¸ðµå: ÃÊ±â ½ÃÀÛ ´ë±â »óÅÂ·Î ÁøÀÔ
+                // È£ï¿½ï¿½Æ®/ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½: ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½
                 currentState = PressState.WAITING_START;
-                Debug.Log("È£½ºÆ®/´ÜÀÏ ¸ðµå: ¼¼¼Ç ½ÃÀÛ ´ë±â Áß");
+                Debug.Log("È£ï¿½ï¿½Æ®/ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½");
             }
         }
     }
@@ -60,7 +60,7 @@ public class PressFSM : MonoBehaviour
     {
         Interlocks.OnInterlockStatusChanged -= CheckSafetyOnInterlockChange;
         EmergencyStop.OnEmergencyStopActivated -= HandleEmergencyStop;
-        GameSignals.SessionStart -= StartPressSequence; // ±¸µ¶ ÇØÁ¦
+        GameSignals.SessionStart -= StartPressSequence; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     }
 
     private void StartPressSequence()
@@ -68,7 +68,7 @@ public class PressFSM : MonoBehaviour
         currentCycle = 0;
         cycleViolationOccurred = false;
         currentState = PressState.WAITING_START;
-        Debug.Log("³×Æ®¿öÅ© ¼¼¼Ç ½ÃÀÛ ½ÅÈ£ ¼ö½Å: ÇÁ·¹½º ½ÃÄö½º ½ÃÀÛ");
+        Debug.Log("ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
     }
 
     void Update()
@@ -100,7 +100,7 @@ public class PressFSM : MonoBehaviour
                 if (isHost && scoringEngine != null)
                     scoringEngine.CalculateFinalScore(currentCycle);
                 currentState = PressState.SESSION_END;
-                Debug.Log("¼¼¼Ç ¿Ï·á. ÃÖÁ¾ Á¡¼ö °è»ê ¿Ï·á.");
+                Debug.Log("ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½.");
                 break;
         }
     }
@@ -115,24 +115,24 @@ public class PressFSM : MonoBehaviour
             cycleStartTime = Time.time;
             OnCycleStart?.Invoke(currentCycle);
             currentState = PressState.CLOSING_PRE_CHECK;
-            Debug.Log($"»çÀÌÅ¬ {currentCycle} ½ÃÀÛ");
+            Debug.Log($"ï¿½ï¿½ï¿½ï¿½Å¬ {currentCycle} ï¿½ï¿½ï¿½ï¿½");
         }
     }
 
     private void StartClosingMotion()
     {
         currentState = PressState.CLOSING;
-        Debug.Log("ÇÁ·¹½º ´ÝÈû ½ÃÀÛ");
+        Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
     }
 
     private void CheckSafetyOnInterlockChange()
     {
         if (currentState == PressState.CLOSING) CheckInterlocksDuringClosing();
-        // Å¬¶óÀÌ¾ðÆ® ¸ðµå¿¡¼­ ÀÎÅÍ·Ï »óÅÂ°¡ º¯°æµÇ¸é È£½ºÆ®¿¡°Ô Àü¼Û (¿É¼Ç)
+        // Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½å¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ È£ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½É¼ï¿½)
         if (netSession != null && netSession.role == NodeRole.Client)
         {
-            // Interlocks »óÅÂ(gate, hand, dual)¸¦ NetSessionÀ» ÅëÇØ È£½ºÆ®¿¡°Ô Àü¼Û
-            // ÀÌ ·ÎÁ÷Àº Interlocks.cs¿¡ Ãß°¡µÉ ¼ö ÀÖ½À´Ï´Ù.
+            // Interlocks ï¿½ï¿½ï¿½ï¿½(gate, hand, dual)ï¿½ï¿½ NetSessionï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È£ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Interlocks.csï¿½ï¿½ ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½.
             // netSession.SendInterlockStatus(Interlocks.ConditionGateClosed ? 1 : 0, Interlocks.ConditionHandsSafe ? 1 : 0, Interlocks.ConditionDualHand ? 1 : 0);
         }
     }
@@ -154,7 +154,7 @@ public class PressFSM : MonoBehaviour
         cycleViolationOccurred = true;
         currentState = PressState.IDLE;
         float t = Time.time - cycleStartTime;
-        Debug.LogWarning($"[À§¹Ý] {playerId} - {type} ({t:F2}s)");
+        Debug.LogWarning($"[ï¿½ï¿½ï¿½ï¿½] {playerId} - {type} ({t:F2}s)");
         scoringEngine?.LogViolation(playerId, currentCycle, type, Time.time);
         OnViolationLogged?.Invoke(playerId, currentCycle, type, t);
     }
@@ -164,19 +164,19 @@ public class PressFSM : MonoBehaviour
         if (currentState == PressState.EMERGENCY_STOP) return;
         PressState prevState = currentState;
         currentState = PressState.EMERGENCY_STOP;
-        Debug.LogError($"ºñ»óÁ¤Áö ¹ßµ¿! ÃâÃ³: {sourceId}");
+        Debug.LogError($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ßµï¿½! ï¿½ï¿½Ã³: {sourceId}");
 
-        // ºñ»ó Á¤Áö°¡ 'ÀûÀý'Çß´ÂÁö ÆÇ´ÜÇÏ´Â ·ÎÁ÷ °³¼±
-        // ´ÝÈû »óÅÂ¿´°í, À§ÇèÇÑ »óÈ²(ÀÎÅÍ·Ï À§¹Ý)ÀÌ ÀÖ¾úÀ» ¶§ ÀûÀýÇÔ
+        // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 'ï¿½ï¿½ï¿½ï¿½'ï¿½ß´ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¿ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È²(ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         bool appropriate = (prevState == PressState.CLOSING) && !Interlocks.IsSafeToContinueClosing;
         string type = appropriate ? "EmergencyStopCorrect" : "EmergencyStopMisuse";
 
-        // ÇöÀç »çÀÌÅ¬¿¡ À§¹Ý ·Î±× ±â·Ï
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½ï¿½
         scoringEngine?.LogViolation(sourceId, currentCycle, type, Time.time);
 
-        // (Ãß°¡ ·ÎÁ÷: ºñ»óÁ¤Áö ÈÄ ÇÁ·¹½º¸¦ ´Ù½Ã Open »óÅÂ·Î ÀüÈ¯ÇÏ´Â ·ÎÁ÷ÀÌ ÇÊ¿äÇÔ)
+        // (ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ Open ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½È¯ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½)
     }
 
-    [ContextMenu("Å×½ºÆ®: ´ÙÀ½ »çÀÌÅ¬ °­Á¦ ½ÃÀÛ")]
+    [ContextMenu("ï¿½×½ï¿½Æ®: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     public void ForceNextCycle() => RequestStartCycle();
 }

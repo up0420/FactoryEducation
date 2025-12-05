@@ -83,7 +83,27 @@ public class QuizAssetSpawner : MonoBehaviourPun
         {
             if (isCorrect)
             {
-                // 정답! -> 오답 쪽 기계가 작동
+                // 정답! -> 정답 쪽 기계가 작동
+                if (isLeftCorrect)
+                {
+                    // 왼쪽이 정답이므로 왼쪽(정답) 기계 작동
+                    if (leftPressMachine != null)
+                    {
+                        leftPressMachine.ForceCrush();
+                    }
+                }
+                else
+                {
+                    // 오른쪽이 정답이므로 오른쪽(정답) 기계 작동
+                    if (rightPressMachine != null)
+                    {
+                        rightPressMachine.ForceCrush();
+                    }
+                }
+            }
+            else
+            {
+                // 오답! -> 오답 쪽 기계가 작동
                 if (isLeftCorrect)
                 {
                     // 왼쪽이 정답이므로 오른쪽(오답) 기계 작동
@@ -95,26 +115,6 @@ public class QuizAssetSpawner : MonoBehaviourPun
                 else
                 {
                     // 오른쪽이 정답이므로 왼쪽(오답) 기계 작동
-                    if (leftPressMachine != null)
-                    {
-                        leftPressMachine.ForceCrush();
-                    }
-                }
-            }
-            else
-            {
-                // 오답! -> 플레이어가 선택한 쪽을 찍음 (교육 효과)
-                // 또는 여전히 오답 쪽을 찍을 수도 있음 (기획 결정 필요)
-                // 현재는 항상 오답 에셋을 찍는 것으로 구현
-                if (isLeftCorrect)
-                {
-                    if (rightPressMachine != null)
-                    {
-                        rightPressMachine.ForceCrush();
-                    }
-                }
-                else
-                {
                     if (leftPressMachine != null)
                     {
                         leftPressMachine.ForceCrush();

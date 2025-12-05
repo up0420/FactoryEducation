@@ -25,7 +25,8 @@ public class QuizManager : MonoBehaviourPunCallbacks
     public AudioSource audioSource;       // 오디오 소스 컴포넌트
     public AudioClip correctSound;        // 정답 효과음 (딩동댕)
     public AudioClip wrongSound;          // 오답 효과음 (땡)
-    public ParticleSystem correctEffect;  // 정답 이펙트 (폭죽)
+    public ParticleSystem correctEffect;  // 정답 이펙트 (폭죽) - O 쪽
+    public ParticleSystem wrongEffect;    // 오답 이펙트 (폭죽) - X 쪽
 
     // 턴 관리
     private int currentPlayerIndex = 0; // 현재 턴 플레이어 (0, 1, 2)
@@ -48,6 +49,18 @@ public class QuizManager : MonoBehaviourPunCallbacks
         else
         {
             Destroy(gameObject);
+        }
+
+        // 정답 이펙트 자동 생성 (할당되지 않은 경우)
+        if (correctEffect == null)
+        {
+            CreateConfettiEffect(true);  // O 쪽
+        }
+
+        // 오답 이펙트 자동 생성 (할당되지 않은 경우)
+        if (wrongEffect == null)
+        {
+            CreateConfettiEffect(false); // X 쪽
         }
     }
 
@@ -72,6 +85,16 @@ public class QuizManager : MonoBehaviourPunCallbacks
     public void StartQuizSystem()
     {
         Debug.Log("[QuizManager] 퀴즈 시스템 시작");
+        
+        // [추가] quizPool 전체 데이터 로깅
+        Debug.Log($"[QuizManager] === 전체 퀴즈 데이터 (총 {quizPool.Count}개) ===");
+        for (int i = 0; i < quizPool.Count; i++)
+        {
+            QuizData q = quizPool[i];
+            string answerText = q.correctAnswer ? "O" : "X";
+            Debug.Log($"[Quiz #{i}] {q.questionText} | 정답: {answerText}");
+        }
+        Debug.Log("[QuizManager] === 퀴즈 데이터 로깅 완료 ===");
 
         // [추가] 퀴즈 UI 강제 활성화 (평소엔 꺼져 있다가 이때 켜짐)
         if (uiController != null)
@@ -131,7 +154,8 @@ public class QuizManager : MonoBehaviourPunCallbacks
 
         usedQuestions.Add(selectedQuestion);
 
-        Debug.Log($"[QuizManager] 문제 출제: {selectedQuestion.questionText}");
+        string correctAnswerText = selectedQuestion.correctAnswer ? "O" : "X";
+        Debug.Log($"[QuizManager] 문제 #{usedQuestions.Count - 1} 출제: {selectedQuestion.questionText} | 정답: {correctAnswerText}");
 
         // 타이머 시작
         currentTimer = timePerQuestion;
@@ -210,8 +234,9 @@ public class QuizManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                // [추가] 오답 효과음
+                // [추가] 오답 효과음 및 이펙트
                 PlaySound(wrongSound);
+                PlayEffect(wrongEffect);
             }
         }
         catch (System.Exception e)
@@ -500,6 +525,85 @@ public class QuizManager : MonoBehaviourPunCallbacks
         if (effect != null)
         {
             effect.Play();
+        }
+    }
+
+    /// <summary>
+    /// 폭죽 이펙트 자동 생성 (할당되지 않은 경우)
+    /// </summary>
+    void CreateConfettiEffect(bool isCorrect)
+    {
+        // ConfettiEffect 게임오브젝트 생성
+        string effectName = isCorrect ? "ConfettiEffect_Correct" : "ConfettiEffect_Wrong";
+        GameObject effectObj = new GameObject(effectName);
+        
+        // 퀴즈 UI Canvas를 기준으로 배치
+        Transform parent = transform;
+        if (uiController != null && uiController.gameObject.transform.parent != null)
+        {
+            parent = uiController.gameObject.transform.parent; // Canvas 부모
+        }
+        
+        effectObj.transform.SetParent(parent);
+        
+        // O는 왼쪽(-6.6), X는 오른쪽(0.1)에 배치 (Canvas 기준)
+        float xPos = isCorrect ? -6.6f : 0.1f;
+        effectObj.transform.localPosition = new Vector3(xPos, 3, 0);
+        
+        Debug.Log($"[QuizManager] {effectName} 생성 시도 - 위치: {effectObj.transform.localPosition}, 부모: {parent.name}");
+
+        // ParticleSystem 컴포넌트 추가
+        ParticleSystem ps = effectObj.AddComponent<ParticleSystem>();
+
+        // 기본 설정
+        var main = ps.main;
+        main.loop = false;              // 한 번만 터져야 함
+        main.playOnAwake = false;       // 시작하자마자 터지면 안 됨
+        main.startSpeed = new ParticleSystem.MinMaxCurve(10f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.5f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(3f);
+
+        // Emission 설정
+        var emission = ps.emission;
+        emission.rateOverTime = new ParticleSystem.MinMaxCurve(0f);
+
+        // Burst 설정 (한 방에 30개 폭죽)
+        ParticleSystem.Burst burst = new ParticleSystem.Burst(0f, 30);
+        emission.SetBursts(new ParticleSystem.Burst[] { burst });
+
+        // Shape 설정 (위로 퍼지도록)
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 25f;
+
+        // Velocity 오버 라이프타임
+        var velocityOverLifetime = ps.velocityOverLifetime;
+        velocityOverLifetime.enabled = true;
+        velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(0f);
+        velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(-7.5f);
+        velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f);
+
+        // 렌더러 설정 (기본 Material 사용)
+        ParticleSystemRenderer renderer = effectObj.GetComponent<ParticleSystemRenderer>();
+        if (renderer != null)
+        {
+            // 기본 파티클 재질 설정
+            renderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
+            
+            // Sorting Order 설정 (UI 앞에 렌더링)
+            renderer.sortingOrder = 100;
+        }
+
+        // QuizManager의 이펙트에 할당
+        if (isCorrect)
+        {
+            correctEffect = ps;
+            Debug.Log("[QuizManager] 폭죽 이펙트 (O 버튼 위) 자동 생성 완료 - 위치: " + effectObj.transform.localPosition);
+        }
+        else
+        {
+            wrongEffect = ps;
+            Debug.Log("[QuizManager] 폭죽 이펙트 (X 버튼 위) 자동 생성 완료 - 위치: " + effectObj.transform.localPosition);
         }
     }
 }

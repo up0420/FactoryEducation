@@ -15,7 +15,7 @@ public class Interlocks : MonoBehaviour
     private static Dictionary<string, PlayerData> players = new();
     private static string lastIntrusionPlayer;
 
-    // NetSession ÀÎ½ºÅÏ½º¸¦ ÀúÀå (Å¬¶óÀÌ¾ðÆ® ¸ðµå¿¡¼­ È£½ºÆ®¿¡°Ô »óÅÂ Àü¼Û¿ë)
+    // NetSession ï¿½Î½ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½å¿¡ï¿½ï¿½ È£ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¿ï¿½)
     private static NetSession1 netSession;
 
     public static string GetLastHandIntrusionPlayer() => lastIntrusionPlayer;
@@ -29,50 +29,50 @@ public class Interlocks : MonoBehaviour
 
     void Start()
     {
-        // NetSession Ã£±â (Å¬¶óÀÌ¾ðÆ® ¸ðµå¿¡¼­ »óÅÂ Àü¼Û¿ë)
+        // NetSession Ã£ï¿½ï¿½ (Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½å¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¿ï¿½)
         netSession = FindObjectOfType<NetSession1>();
     }
 
     /// <summary>
-    /// ÁöÁ¤µÈ ÇÃ·¹ÀÌ¾îÀÇ ÀÎÅÍ·Ï °ü·Ã »óÅÂ¸¦ ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
-    /// NetSessionÀÇ /interlock/status ¶Ç´Â /ppe/select ¸Þ½ÃÁö ¼ö½Å ½Ã È£ÃâµË´Ï´Ù.
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½Õ´Ï´ï¿½.
+    /// NetSessionï¿½ï¿½ /interlock/status ï¿½Ç´ï¿½ /ppe/select ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½Ë´Ï´ï¿½.
     /// </summary>
-    /// <param name="id">ÇÃ·¹ÀÌ¾î ID</param>
-    /// <param name="gate">°ÔÀÌÆ® »óÅÂ (1: Closed, 0: Open)</param>
-    /// <param name="hand">¼Õ ¾ÈÀü »óÅÂ (1: Safe, 0: Intrusion)</param>
-    /// <param name="dual">¾ç¼Õ ÀÛµ¿ »óÅÂ (1: Engaged, 0: Not Engaged)</param>
+    /// <param name="id">ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ID</param>
+    /// <param name="gate">ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (1: Closed, 0: Open)</param>
+    /// <param name="hand">ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (1: Safe, 0: Intrusion)</param>
+    /// <param name="dual">ï¿½ï¿½ï¿½ ï¿½Ûµï¿½ ï¿½ï¿½ï¿½ï¿½ (1: Engaged, 0: Not Engaged)</param>
     public static void UpdatePlayer(string id, int gate, int hand, int dual)
     {
         if (!players.ContainsKey(id)) players[id] = new PlayerData();
         var p = players[id];
 
-        // ¼Õ Ä§ÀÔ °¨Áö ½Ã Ä§ÀÔ ÇÃ·¹ÀÌ¾î ID ¾÷µ¥ÀÌÆ®
+        // ï¿½ï¿½ Ä§ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Ä§ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ID ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
         if (p.Hand == 1 && hand == 0) lastIntrusionPlayer = id;
 
         p.Gate = gate; p.Hand = hand; p.Dual = dual;
         UpdateConditions();
 
-        // Å¬¶óÀÌ¾ðÆ® ¸ðµåÀÎ °æ¿ì, È£½ºÆ®¿¡°Ô ÀÚ½ÅÀÇ »óÅÂ¸¦ Áï½Ã Àü¼Û (¼±ÅÃÀû)
+        // Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½, È£ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
         if (netSession != null && netSession.role == NodeRole.Client)
         {
             // NetSession.SendInterlockStatus(gate, hand, dual); 
-            // ÀÌ ·ÎÁ÷Àº PressFSM.csÀÇ CheckSafetyOnInterlockChange¿¡¼­ Ã³¸®ÇÏ´Â °ÍÀÌ ÁÁ½À´Ï´Ù.
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PressFSM.csï¿½ï¿½ CheckSafetyOnInterlockChangeï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.
         }
     }
 
     static void UpdateConditions()
     {
-        // ¸ðµç ÇÃ·¹ÀÌ¾îÀÇ °ÔÀÌÆ®°¡ ´ÝÇô¾ß ÇÔ
+        // ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
         ConditionGateClosed = players.Values.All(p => p.Gate == 1);
-        // ¸ðµç ÇÃ·¹ÀÌ¾îÀÇ ¼ÕÀÌ ¾ÈÀüÇØ¾ß ÇÔ
+        // ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½ï¿½
         ConditionHandsSafe = players.Values.All(p => p.Hand == 1);
-        // ÇÑ ¸íÀÌ¶óµµ ¾ç¼Õ ÀÛµ¿À» ÇØ¾ß ÇÔ (»çÀÌÅ¬ ½ÃÀÛ Á¶°Ç)
+        // ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¶ï¿½ ï¿½ï¿½ï¿½ ï¿½Ûµï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½Å¬ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         ConditionDualHand = players.Values.Any(p => p.Dual == 1);
 
         OnInterlockStatusChanged?.Invoke();
     }
 
-    // Å×½ºÆ®¿ë
-    [ContextMenu("¸ðµç Á¶°Ç ¾ÈÀü")]
+    // ï¿½×½ï¿½Æ®ï¿½ï¿½
+    [ContextMenu("ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     void TestSafe() => UpdatePlayer("test", 1, 1, 1);
 }

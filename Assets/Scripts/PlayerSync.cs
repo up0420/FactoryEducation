@@ -5,96 +5,96 @@ public class PlayerSync : MonoBehaviour
 {
 
     [Header("Network Settings")]
-    public bool isLocal = false; // ¡Ú Inspector¿¡¼­ '³ª'ÀÏ °æ¿ì Ã¼Å©
-    public string playerId = "Player_1"; // (ÀÓ½Ã) °íÀ¯ ID
-    public float syncRate = 0.05f; // 0.05ÃÊ(20Hz)¸¶´Ù À§Ä¡ Àü¼Û
-    public float lerpSpeed = 10f;  // (Å¸ÀÎ) À§Ä¡ º¸°£ ¼Óµµ
+    public bool isLocal = false; // ï¿½ï¿½ Inspectorï¿½ï¿½ï¿½ï¿½ 'ï¿½ï¿½'ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã¼Å©
+    public string playerId = "Player_1"; // (ï¿½Ó½ï¿½) ï¿½ï¿½ï¿½ï¿½ ID
+    public float syncRate = 0.05f; // 0.05ï¿½ï¿½(20Hz)ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
+    public float lerpSpeed = 10f;  // (Å¸ï¿½ï¿½) ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½
 
     [Header("Component References")]
-    public GameObject vrCameraRig;    // 1ÀÎÄª Ä«¸Þ¶ó/¼Õ (XRRig)
-    public GameObject avatarBodyMesh; // 3ÀÎÄª ¾Æ¹ÙÅ¸ ¸ðµ¨ (HumanM_BodyMesh)
+    public GameObject vrCameraRig;    // 1ï¿½ï¿½Äª Ä«ï¿½Þ¶ï¿½/ï¿½ï¿½ (XRRig)
+    public GameObject avatarBodyMesh; // 3ï¿½ï¿½Äª ï¿½Æ¹ï¿½Å¸ ï¿½ï¿½ (HumanM_BodyMesh)
 
-    // ¡å¡å¡å 1. Ãß°¡µÈ ºÎºÐ (¸ðµç »ö»ó ¸ÓÆ¼¸®¾ó ¹è¿­) ¡å¡å¡å
+    // ï¿½ï¿½ï¿½ï¿½ 1. ï¿½ß°ï¿½ï¿½ï¿½ ï¿½Îºï¿½ (ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ ï¿½è¿­) ï¿½ï¿½ï¿½ï¿½
     [Header("Color Options")]
-    // Inspector¿¡¼­ ¿©±â¿¡ »¡°£»ö, ÆÄ¶õ»ö µî ¸ðµç ¸ÓÆ¼¸®¾óÀ» ¹Ì¸® ³Ö¾îµÓ´Ï´Ù.
+    // Inspectorï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½Ä¶ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½Ö¾ï¿½Ó´Ï´ï¿½.
     public Material[] allPlayerMaterials; // [0]=Red, [1]=Blue, [2]=Green ...
-    // ¡ã¡ã¡ã
+    // ï¿½ï¿½ï¿½ï¿½
 
-    // --- ³»ºÎ º¯¼ö ---
-    private NetSession1 netSession; // Áß¾Ó °ü¸®ÀÚ
+    // --- ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ---
+    private NetSession1 netSession; // ï¿½ß¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private Vector3 targetPos;
     private Quaternion targetRot;
 
-    // --- ·ÎÄÃ ÇÃ·¹ÀÌ¾î¿ë ½ºÅ©¸³Æ® ÂüÁ¶ ---
+    // --- ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ---
     private NewPlayerMover localMover;
     private CharacterController controller;
 
 
     void Start()
     {
-        // Áß¾Ó °ü¸®ÀÚ(NetSession)¸¦ ¾À¿¡¼­ Ã£À½
+        // ï¿½ß¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(NetSession)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
         netSession = FindObjectOfType<NetSession1>();
         if (netSession == null)
         {
-            Debug.LogError("¾À¿¡ NetSession ¿ÀºêÁ§Æ®°¡ ¾ø½À´Ï´Ù!");
+            Debug.LogError("ï¿½ï¿½ï¿½ï¿½ NetSession ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½!");
             return;
         }
 
-        // NetSession¿¡ ³ª¸¦ µî·Ï
+        // NetSessionï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         netSession.RegisterPlayer(playerId, this);
 
-        // ·ÎÄÃ ½ºÅ©¸³Æ®µé °¡Á®¿À±â
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å©ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         localMover = GetComponent<NewPlayerMover>();
         controller = GetComponent<CharacterController>();
 
-        // 1ÀÎÄª / 3ÀÎÄª ÀüÈ¯
+        // 1ï¿½ï¿½Äª / 3ï¿½ï¿½Äª ï¿½ï¿½È¯
         if (isLocal)
         {
-            // '³ª' (1ÀÎÄª)
+            // 'ï¿½ï¿½' (1ï¿½ï¿½Äª)
             if (vrCameraRig) vrCameraRig.SetActive(true);
             if (avatarBodyMesh) avatarBodyMesh.SetActive(false);
             if (localMover) localMover.enabled = true;
             if (controller) controller.enabled = true;
 
-            // ³» À§Ä¡ Á¤º¸ Àü¼Û ½ÃÀÛ
+            // ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             StartCoroutine(SendPoseLoop());
         }
         else
         {
-            // 'Å¸ÀÎ' (3ÀÎÄª)
+            // 'Å¸ï¿½ï¿½' (3ï¿½ï¿½Äª)
             if (vrCameraRig) vrCameraRig.SetActive(false);
             if (avatarBodyMesh) avatarBodyMesh.SetActive(true);
             if (localMover) localMover.enabled = false;
             if (controller) controller.enabled = false;
-            // (»ö»ó Àû¿ëÀº NetSession1ÀÌ ½ÅÈ£¸¦ ÁÙ ¶§ SetAvatarColor ÇÔ¼ö°¡ Ã³¸®)
-            // (Å×½ºÆ®¿ë) 'Å¸ÀÎ' ¾Æ¹ÙÅ¸¶ó¸é °­Á¦·Î 0¹ø ¸ÓÆ¼¸®¾ó(»¡°£»ö)À» Àû¿ë
+            // (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ NetSession1ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ SetAvatarColor ï¿½Ô¼ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½)
+            // (ï¿½×½ï¿½Æ®ï¿½ï¿½) 'Å¸ï¿½ï¿½' ï¿½Æ¹ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             SetAvatarColor(0);
         }
     }
 
-    // 'Å¸ÀÎ'ÀÏ °æ¿ì¿¡¸¸ ½ÇÇàµÊ
+    // 'Å¸ï¿½ï¿½'ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
     void Update()
     {
         if (!isLocal)
         {
-            // ¼ö½ÅµÈ targetPos/Rot¸¦ ÇâÇØ ºÎµå·´°Ô ÀÌµ¿
+            // ï¿½ï¿½ï¿½Åµï¿½ targetPos/Rotï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµå·´ï¿½ï¿½ ï¿½Ìµï¿½
             transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * lerpSpeed);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * lerpSpeed);
         }
     }
 
-    // '³ª'ÀÏ °æ¿ì¿¡¸¸ ½ÇÇàµÊ
+    // 'ï¿½ï¿½'ï¿½ï¿½ ï¿½ï¿½ì¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
     IEnumerator SendPoseLoop()
     {
         while (true)
         {
-            // XRRig ¾ÈÀÇ ½ÇÁ¦ Ä«¸Þ¶ó(´«) À§Ä¡¸¦ Ã£À½
+            // XRRig ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½(ï¿½ï¿½) ï¿½ï¿½Ä¡ï¿½ï¿½ Ã£ï¿½ï¿½
             Transform eyeCamera = vrCameraRig.transform.Find("Camera");
-            // (¸¸¾à OVRCameraRig¶ó¸é °æ·Î´Â "TrackingSpace/CenterEyeAnchor")
+            // (ï¿½ï¿½ï¿½ï¿½ OVRCameraRigï¿½ï¿½ï¿½ ï¿½ï¿½Î´ï¿½ "TrackingSpace/CenterEyeAnchor")
 
             if (eyeCamera != null)
             {
-                // NetSessionÀ» ÅëÇØ ³» À§Ä¡/È¸Àü Á¤º¸ Àü¼Û
+                // NetSessionï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Ä¡/È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 netSession.SendPose(eyeCamera.position, eyeCamera.rotation);
             }
 
@@ -102,7 +102,7 @@ public class PlayerSync : MonoBehaviour
         }
     }
 
-    // NetSessionÀÌ È£ÃâÇØÁÖ´Â ÇÔ¼ö (Å¸ÀÎÀÇ À§Ä¡ °»½Å)
+    // NetSessionï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ ï¿½Ô¼ï¿½ (Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½)
     public void OnPoseUpdate(Vector3 pos, Quaternion rot)
     {
         if (!isLocal)
@@ -112,26 +112,26 @@ public class PlayerSync : MonoBehaviour
         }
     }
 
-    // ¡å¡å¡å 2. Ãß°¡µÈ ºÎºÐ (NetSession1ÀÌ È£ÃâÇÒ »ö»ó Àû¿ë ÇÔ¼ö) ¡å¡å¡å
+    // ï¿½ï¿½ï¿½ï¿½ 2. ï¿½ß°ï¿½ï¿½ï¿½ ï¿½Îºï¿½ (NetSession1ï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½) ï¿½ï¿½ï¿½ï¿½
     /// <summary>
-    /// NetSession1·ÎºÎÅÍ ¹ÞÀº »ö»ó ÀÎµ¦½º·Î ¾Æ¹ÙÅ¸ ¸ÓÆ¼¸®¾óÀ» ¼³Á¤ÇÕ´Ï´Ù.
+    /// NetSession1ï¿½Îºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ¹ï¿½Å¸ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
     /// </summary>
-    /// <param name="colorIndex">allPlayerMaterials ¹è¿­ÀÇ ÀÎµ¦½º</param>
+    /// <param name="colorIndex">allPlayerMaterials ï¿½è¿­ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½</param>
     public void SetAvatarColor(int colorIndex)
     {
-        if (isLocal) return; // '³ª' ÀÚ½Å¿¡°Ô´Â Àû¿ëÇÏÁö ¾ÊÀ½ (³» ¾Æ¹ÙÅ¸´Â ²¨Á®ÀÖÀ½)
+        if (isLocal) return; // 'ï¿½ï¿½' ï¿½Ú½Å¿ï¿½ï¿½Ô´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ ï¿½Æ¹ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
 
         if (avatarBodyMesh != null && allPlayerMaterials != null && allPlayerMaterials.Length > colorIndex && colorIndex >= 0)
         {
-            // ¾Æ¹ÙÅ¸ ¸ðµ¨ÀÇ ·»´õ·¯¸¦ Ã£½À´Ï´Ù. (SkinnedMeshRendererÀÏ ¼öµµ ÀÖÀ½)
+            // ï¿½Æ¹ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ï¿½Ï´ï¿½. (SkinnedMeshRendererï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
             Renderer avatarRenderer = avatarBodyMesh.GetComponentInChildren<Renderer>();
             if (avatarRenderer != null)
             {
-                // ¹è¿­¿¡¼­ ¿Ã¹Ù¸¥ ¸ÓÆ¼¸®¾óÀ» Ã£¾Æ Àû¿ëÇÕ´Ï´Ù.
+                // ï¿½è¿­ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¹Ù¸ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
                 avatarRenderer.material = allPlayerMaterials[colorIndex];
-                Debug.Log($"[{playerId}] ¾Æ¹ÙÅ¸ »ö»ó º¯°æ: {allPlayerMaterials[colorIndex].name}");
+                Debug.Log($"[{playerId}] ï¿½Æ¹ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {allPlayerMaterials[colorIndex].name}");
             }
         }
     }
-    // ¡ã¡ã¡ã
+    // ï¿½ï¿½ï¿½ï¿½
 }
