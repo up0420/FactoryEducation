@@ -222,7 +222,16 @@ public class QuizManager : MonoBehaviourPunCallbacks
         // UI 업데이트: 결과 표시
         if (uiController != null)
         {
-            uiController.ShowResult(isCorrect, currentQuestion.explanation);
+            // 현재 점수 계산 (10점당 1문제)
+            int currentScore = 0;
+            if (ScoreManager.Instance != null)
+            {
+                var scoreData = ScoreManager.Instance.GetPlayerScore(currentPlayerIndex);
+                if (scoreData != null) currentScore = scoreData.workScore;
+            }
+            int correctCount = currentScore / 10;
+
+            uiController.ShowResult(isCorrect, currentQuestion.explanation, correctCount, questionsPerPlayer);
         }
 
         // 프레스 기계 작동: 오답 에셋 파괴
@@ -262,6 +271,10 @@ public class QuizManager : MonoBehaviourPunCallbacks
         }
     }
 
+    [Header("Delay Settings")]
+    public float intermediateScoreDelay = 5f; // 중간 점수판 표시 시간 (Inspector에서 수정 가능)
+    public float finalScoreDelay = 3f;        // 최종 점수판 대기 시간 (Inspector에서 수정 가능)
+
     /// <summary>
     /// [추가] 중간 점수판 표시 및 다음 턴 대기
     /// </summary>
@@ -283,8 +296,8 @@ public class QuizManager : MonoBehaviourPunCallbacks
             uiController.ShowIndividualResult(currentPlayerIndex, correctCount, questionsPerPlayer);
         }
 
-        // Wait 5 seconds, then proceed to next turn
-        Invoke(nameof(ProceedToNextTurn), 5f);
+        // Wait (Inspector 설정 시간만큼 대기)
+        Invoke(nameof(ProceedToNextTurn), intermediateScoreDelay);
     }
 
     /// <summary>
@@ -295,15 +308,18 @@ public class QuizManager : MonoBehaviourPunCallbacks
         currentQuestionIndex = 0;
         currentPlayerIndex++;
 
-        if (currentPlayerIndex < GameManager.MAX_PLAYERS)
+        // [수정] 고정된 MAX_PLAYERS(3) 대신 실제 접속 인원수만큼만 진행
+        int maxPlayers = GameManager.Instance != null ? GameManager.Instance.GetCurrentPlayerCount() : GameManager.MAX_PLAYERS;
+
+        if (currentPlayerIndex < maxPlayers)
         {
             StartPlayerTurn(currentPlayerIndex);
         }
         else
         {
-            // All players finished -> Show Final Scoreboard after 3 seconds
-            Debug.Log("[QuizManager] All players finished. Showing Final Scoreboard in 3s.");
-            Invoke(nameof(EndQuizSystem), 3f);
+            // All players finished -> Show Final Scoreboard
+            Debug.Log($"[QuizManager] All players finished. Showing Final Scoreboard in {finalScoreDelay}s.");
+            Invoke(nameof(EndQuizSystem), finalScoreDelay);
         }
     }
 
@@ -316,7 +332,11 @@ public class QuizManager : MonoBehaviourPunCallbacks
 
         // Collect all scores
         List<int> allScores = new List<int>();
-        for (int i = 0; i < GameManager.MAX_PLAYERS; i++)
+        
+        // [수정] 실제 접속한 플레이어 수만큼만 점수 수집
+        int maxPlayers = GameManager.Instance != null ? GameManager.Instance.GetCurrentPlayerCount() : GameManager.MAX_PLAYERS;
+
+        for (int i = 0; i < maxPlayers; i++)
         {
             var score = ScoreManager.Instance.GetPlayerScore(i);
             if (score != null)
@@ -336,22 +356,8 @@ public class QuizManager : MonoBehaviourPunCallbacks
         }
     }
 
-    /// <summary>
-    /// 퀴즈 재시작 (Restart 버튼)
-    /// </summary>
-    public void RestartQuiz()
-    {
-        Debug.Log("[QuizManager] 퀴즈 재시작");
-
-        // 1. 점수 초기화
-        if (ScoreManager.Instance != null)
-        {
-            ScoreManager.Instance.ResetScores();
-        }
-
-        // 2. 퀴즈 시스템 재시작
-        StartQuizSystem();
-    }
+    // [삭제됨] 재시작 기능 제거
+    // public void RestartQuiz() { ... }
 
     /// <summary>
     /// 게임 종료 및 로비로 이동 (Exit 버튼)

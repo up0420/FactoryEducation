@@ -168,6 +168,16 @@ public class PressMachine : MonoBehaviourPun
             // 하강
             yield return StartCoroutine(MovePressHead(downPosition, "하강 중..."));
 
+            // [추가] 하강 완료 시점에서 모델 교체 (프레스 효과)
+            if (hasProductInside && currentProduct != null)
+            {
+                PressableObject pressable = currentProduct.GetComponent<PressableObject>();
+                if (pressable != null)
+                {
+                    pressable.OnPressed();
+                }
+            }
+
             // 제품 체크 및 완성품 생성
             if (hasProductInside && currentProduct != null && PhotonNetwork.IsMasterClient)
             {
@@ -351,6 +361,16 @@ public class PressMachine : MonoBehaviourPun
     {
         // 하강
         yield return StartCoroutine(MovePressHead(downPosition, "크러시!"));
+
+        // [추가] 퀴즈용 크러시에서도 모델 교체 실행
+        if (hasProductInside && currentProduct != null)
+        {
+            PressableObject pressable = currentProduct.GetComponent<PressableObject>();
+            if (pressable != null)
+            {
+                pressable.OnPressed();
+            }
+        }
 
         // 0.5초 대기 (압착 효과)
         yield return new WaitForSeconds(0.5f);
