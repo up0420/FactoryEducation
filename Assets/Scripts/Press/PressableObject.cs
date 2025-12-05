@@ -26,4 +26,13 @@ public class PressableObject : MonoBehaviour
         
         Debug.Log($"[PressableObject] {name} 모델 교체 완료!");
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Bottom")
+        {
+            if (beforeModel != null) beforeModel.SetActive(false);
+            if (afterModel != null) afterModel.SetActive(true);
+        }
+    }
 }

@@ -256,6 +256,8 @@ public class QuizUIController : MonoBehaviour
     [Header("Message Settings")]
     public string correctMessage = "정답입니다!";
     public string incorrectMessage = "오답입니다!";
+    public string correctCountLabel = "Correct: "; // [추가] 정답 개수 라벨
+    public Color correctCountColor = Color.white;  // [추가] 정답 개수 텍스트 색상
 
     /// <summary>
     /// Result 화면 표시 (문제별 결과)
@@ -334,8 +336,8 @@ public class QuizUIController : MonoBehaviour
         {
             // Reuse for "Correct Count"
             finalRankText.gameObject.SetActive(true);
-            finalRankText.text = $"Correct: {correctCount}";
-            finalRankText.color = Color.white; 
+            finalRankText.text = $"{correctCountLabel}{correctCount}"; // [수정] 변수 사용
+            finalRankText.color = correctCountColor; // [수정] 인스펙터 설정 색상 사용
         }
         // [변경] 중간 점수판에서는 확인 버튼 숨김
         if (confirmButton != null) confirmButton.gameObject.SetActive(false);

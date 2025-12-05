@@ -25,7 +25,7 @@ public class QuizManager : MonoBehaviourPunCallbacks
     public AudioSource audioSource;       // 오디오 소스 컴포넌트
     public AudioClip correctSound;        // 정답 효과음 (딩동댕)
     public AudioClip wrongSound;          // 오답 효과음 (땡)
-    public ParticleSystem correctEffect;  // 정답 이펙트 (폭죽)
+    public GameObject correctEffectPrefab;  // [변경] 정답 이펙트 프리팹 (Particle or VFX)
 
     // 턴 관리
     private int currentPlayerIndex = 0; // 현재 턴 플레이어 (0, 1, 2)
@@ -206,7 +206,7 @@ public class QuizManager : MonoBehaviourPunCallbacks
                 
                 // [추가] 정답 효과음 및 이펙트
                 PlaySound(correctSound);
-                PlayEffect(correctEffect);
+                PlayEffect(correctEffectPrefab);
             }
             else
             {
@@ -501,11 +501,16 @@ public class QuizManager : MonoBehaviourPunCallbacks
     }
 
     // [추가] 이펙트 재생 헬퍼
-    void PlayEffect(ParticleSystem effect)
+    void PlayEffect(GameObject effectPrefab)
     {
-        if (effect != null)
+        if (effectPrefab != null)
         {
-            effect.Play();
+            // 퀴즈 존 위치에 이펙트 생성
+            Vector3 spawnPos = transform.position; // 기본값
+            if (quizZone != null) spawnPos = quizZone.position + Vector3.up * 1.5f; // 약간 위쪽
+
+            GameObject effect = Instantiate(effectPrefab, spawnPos, Quaternion.identity);
+            Destroy(effect, 3f); // 3초 후 자동 파괴
         }
     }
 }
