@@ -438,4 +438,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         return -1;
     }
+
+    /// <summary>
+    /// 현재 방에 있는 실제 플레이어 수 반환
+    /// </summary>
+    public int GetCurrentPlayerCount()
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            return PhotonNetwork.CurrentRoom.PlayerCount;
+        }
+        return 1; // 방에 없으면 기본 1명
+    }
 }

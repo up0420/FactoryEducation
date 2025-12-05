@@ -28,11 +28,12 @@ public class QuizUIController : MonoBehaviour
     [Header("Result UI")]
     public TextMeshProUGUI resultText;   // "정답입니다!" / "오답입니다!" (문제별 결과)
     public TextMeshProUGUI explanationText; // [추가] 정답 설명 텍스트
-    public GameObject scoreboardPanel;   // 최종 점수판 패널
+    public GameObject intermediateScorePanel;   // 최종 점수판 패널
     public TextMeshProUGUI finalScoreText; // [추가] 최종 점수 텍스트 (예: "Score: 3 / 3")
     public TextMeshProUGUI finalRankText;  // [추가] 최종 등급 텍스트 (예: "Perfect!")
-    public Button restartButton;           // [추가] 재시작 버튼
-    public Button exitButton;              // [추가] 종료 버튼
+    
+    [Header("Buttons (Assign in Inspector)")]
+    public Button confirmButton;           // [변경] 확인 버튼 (로비로 이동)
 
     // [추가] VR 입력 감지용 변수
     private UnityEngine.XR.InputDevice leftController;
@@ -46,24 +47,17 @@ public class QuizUIController : MonoBehaviour
             startButton.onClick.AddListener(OnStartButtonClicked);
         }
 
-        // [추가] 재시작/종료 버튼 이벤트 연결
-        if (restartButton != null)
+        // [변경] 확인 버튼 이벤트 연결 (게임 종료 -> 로비 이동)
+        if (confirmButton != null)
         {
-            restartButton.onClick.AddListener(() => 
-            {
-                if (QuizManager.Instance != null) QuizManager.Instance.RestartQuiz();
-            });
-        }
-
-        if (exitButton != null)
-        {
-            exitButton.onClick.AddListener(() => 
+            confirmButton.onClick.AddListener(() => 
             {
                 if (QuizManager.Instance != null) QuizManager.Instance.ExitGame();
             });
         }
 
-        // 초기 상태: 모든 패널 숨김
+        // 초기 상태: 모든 패널 숨김 (확실하게!)
+        HideAll();
         ShowStandby(false);
     }
 
@@ -147,12 +141,13 @@ public class QuizUIController : MonoBehaviour
     /// </summary>
     public void ShowStandby(bool isMyTurn)
     {
-        SetActivePanel(standbyPanel);
+        HideAll();
+        if (standbyPanel != null) standbyPanel.SetActive(true);
 
         if (standbyText != null)
         {
             // [수정] 테스트를 위해 텍스트 변경
-            standbyText.text = "테스트 모드: [Start]를 누르세요.";
+            standbyText.text = "당신의 차례입니다. [Start] 버튼을 누르세요.";
         }
 
         // [수정] 테스트를 위해 무조건 활성화
@@ -167,7 +162,8 @@ public class QuizUIController : MonoBehaviour
     /// </summary>
     public void ShowQuestion(string question)
     {
-        SetActivePanel(questionPanel);
+        HideAll();
+        if (questionPanel != null) questionPanel.SetActive(true);
 
         if (questionText != null)
         {
@@ -211,82 +207,6 @@ public class QuizUIController : MonoBehaviour
     }
 
     /// <summary>
-    /// Result 화면 표시 (문제별 결과)
-    /// </summary>
-    public void ShowResult(bool isCorrect, string explanation = "")
-    {
-        SetActivePanel(resultPanel);
-
-        if (resultText != null)
-        {
-            resultText.text = isCorrect ? "정답입니다!" : "오답입니다!";
-            resultText.color = isCorrect ? Color.green : Color.red;
-        }
-
-        // [추가] 설명 표시
-        if (explanationText != null)
-        {
-            explanationText.text = explanation;
-        }
-    }
-
-    /// <summary>
-    /// 최종 결과 화면 표시 (점수판)
-    /// </summary>
-    /// <summary>
-    /// 최종 결과 화면 표시 (점수판)
-    /// isIntermediate: 중간 결과인지 여부 (true면 버튼 숨김)
-    /// </summary>
-    public void ShowFinalResult(int score, int totalQuestions, bool isIntermediate = false)
-    {
-        // 모든 패널 끄고 결과 패널만 켜기
-        SetActivePanel(resultPanel);
-        
-        // 1. 점수판 패널 활성화 (만약 별도로 있다면)
-        if (scoreboardPanel != null) scoreboardPanel.SetActive(true);
-
-        // 2. 점수 표시
-        if (finalScoreText != null)
-        {
-            finalScoreText.text = $"Score: {score} / {totalQuestions}";
-        }
-
-        // 3. 등급 및 메시지 결정
-        string rankMessage = "";
-        Color rankColor = Color.white;
-
-        if (score == totalQuestions) // 만점
-        {
-            rankMessage = "Perfect!\n(Safety Master)";
-            rankColor = Color.green;
-        }
-        else if (score >= totalQuestions - 1) // 1개 틀림 (2/3)
-        {
-            rankMessage = "Pass\n(Qualified)";
-            rankColor = Color.yellow;
-        }
-        else // 나머지 (Fail)
-        {
-            rankMessage = "Fail\n(Retraining Needed)";
-            rankColor = Color.red;
-        }
-
-        // 4. 등급 표시
-        if (finalRankText != null)
-        {
-            finalRankText.text = rankMessage;
-            finalRankText.color = rankColor;
-        }
-        
-        // 기존 문제별 결과 텍스트는 숨김
-        if (resultText != null) resultText.gameObject.SetActive(false);
-
-        // [추가] 재시작/종료 버튼 활성화 여부
-        if (restartButton != null) restartButton.gameObject.SetActive(!isIntermediate);
-        if (exitButton != null) exitButton.gameObject.SetActive(!isIntermediate);
-    }
-
-    /// <summary>
     /// O/X 버튼 활성화/비활성화
     /// </summary>
     public void EnableButtons(bool enabled)
@@ -326,10 +246,61 @@ public class QuizUIController : MonoBehaviour
         if (standbyPanel != null) standbyPanel.SetActive(false);
         if (questionPanel != null) questionPanel.SetActive(false);
         if (resultPanel != null) resultPanel.SetActive(false);
+        if (intermediateScorePanel != null) intermediateScorePanel.SetActive(false);
+        if (finalScorePanel != null) finalScorePanel.SetActive(false);
     }
     [Header("Final Scoreboard UI")]
-    public GameObject finalScoreboardPanel;      // Final comprehensive scoreboard (White Canvas)
+    public GameObject finalScorePanel;      // Final comprehensive scoreboard (White Canvas)
     public TextMeshProUGUI[] finalPlayerScores;  // Array for player scores (Player 1, 2, 3...)
+
+    [Header("Message Settings")]
+    public string correctMessage = "정답입니다!";
+    public string incorrectMessage = "오답입니다!";
+    public string correctCountLabel = "Correct: "; // [추가] 정답 개수 라벨
+    public Color correctCountColor = Color.white;  // [추가] 정답 개수 텍스트 색상
+
+    /// <summary>
+    /// Result 화면 표시 (문제별 결과)
+    /// </summary>
+    public void ShowResult(bool isCorrect, string explanation, int correctCount, int totalQuestions)
+    {
+        HideAll(); // 다른 패널 끄기
+        if (resultPanel != null) resultPanel.SetActive(true);
+
+        // 1. 결과 텍스트 (정답/오답) - 상단 큰 텍스트
+        if (resultText != null)
+        {
+            resultText.gameObject.SetActive(true);
+            resultText.text = isCorrect ? correctMessage : incorrectMessage;
+            resultText.color = isCorrect ? Color.green : Color.red;
+        }
+
+        // 2. 중간 점수판 켜기 (점수 및 설명 표시용)
+        if (intermediateScorePanel != null) intermediateScorePanel.SetActive(true);
+
+        // 3. 점수 텍스트 업데이트 (예: Score: 3 / 5)
+        if (finalScoreText != null)
+        {
+            finalScoreText.text = $"Score: {correctCount} / {totalQuestions}";
+        }
+
+        // 4. 등급/메시지 텍스트 (패널 내부 텍스트)
+        if (finalRankText != null)
+        {
+            finalRankText.gameObject.SetActive(true); // 무조건 켜기
+            finalRankText.text = isCorrect ? correctMessage : incorrectMessage;
+            finalRankText.color = isCorrect ? Color.green : Color.red;
+        }
+
+        // 5. 설명 텍스트 표시
+        if (explanationText != null)
+        {
+            explanationText.text = explanation;
+        }
+        
+        // 확인 버튼은 숨김 (문제별 결과이므로 자동 진행)
+        if (confirmButton != null) confirmButton.gameObject.SetActive(false);
+    }
 
     /// <summary>
     /// Show Individual Result (Intermediate)
@@ -337,17 +308,26 @@ public class QuizUIController : MonoBehaviour
     public void ShowIndividualResult(int playerIndex, int correctCount, int totalQuestions)
     {
         // Turn off all other panels and show result panel
-        SetActivePanel(resultPanel);
+        HideAll();
+        if (resultPanel != null) resultPanel.SetActive(true);
         
         // 1. Enable Scoreboard Panel
-        if (scoreboardPanel != null) scoreboardPanel.SetActive(true);
-        // 2. Set Text
-        int totalScore = correctCount * 10;
+        if (intermediateScorePanel != null) intermediateScorePanel.SetActive(true);
+        
+        // [수정] 기존 결과 텍스트("오답입니다!" 등)가 겹치지 않도록 비활성화
         if (resultText != null)
         {
-            resultText.gameObject.SetActive(true);
-            resultText.text = $"Player {playerIndex + 1}'s Result";
+            resultText.gameObject.SetActive(false); 
         }
+
+        // 2. Set Text
+        int totalScore = correctCount * 10;
+        
+        // [참고] resultText 대신 별도의 텍스트를 쓰거나, resultText를 재활용하려면 위치가 겹치지 않아야 함.
+        // 여기서는 scoreboardPanel 내부의 텍스트를 사용한다고 가정하거나, 
+        // 만약 resultText를 재활용해야 한다면 위치를 조정해야 합니다.
+        // 현재 코드 흐름상 resultText를 끄고 finalScoreText 등을 사용하는 것이 안전해 보입니다.
+
         if (finalScoreText != null)
         {
             finalScoreText.text = $"Score: {totalScore}";
@@ -356,12 +336,11 @@ public class QuizUIController : MonoBehaviour
         {
             // Reuse for "Correct Count"
             finalRankText.gameObject.SetActive(true);
-            finalRankText.text = $"Correct: {correctCount}";
-            finalRankText.color = Color.white; 
+            finalRankText.text = $"{correctCountLabel}{correctCount}"; // [수정] 변수 사용
+            finalRankText.color = correctCountColor; // [수정] 인스펙터 설정 색상 사용
         }
-        // Hide buttons for intermediate result
-        if (restartButton != null) restartButton.gameObject.SetActive(false);
-        if (exitButton != null) exitButton.gameObject.SetActive(false);
+        // [변경] 중간 점수판에서는 확인 버튼 숨김
+        if (confirmButton != null) confirmButton.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -373,9 +352,9 @@ public class QuizUIController : MonoBehaviour
         HideAll();
         
         // Show Final Scoreboard Panel
-        if (finalScoreboardPanel != null)
+        if (finalScorePanel != null)
         {
-            finalScoreboardPanel.SetActive(true);
+            finalScorePanel.SetActive(true);
         }
         // Display scores for each player
         for (int i = 0; i < finalPlayerScores.Length; i++)
@@ -390,16 +369,11 @@ public class QuizUIController : MonoBehaviour
                 finalPlayerScores[i].gameObject.SetActive(false);
             }
         }
-        // Enable Restart/Exit buttons
-        if (restartButton != null) 
+        // [변경] 최종 화면에서만 확인 버튼 활성화
+        if (confirmButton != null) 
         {
-            restartButton.gameObject.SetActive(true);
-            restartButton.transform.SetAsLastSibling(); // Bring to front
-        }
-        if (exitButton != null) 
-        {
-            exitButton.gameObject.SetActive(true);
-            exitButton.transform.SetAsLastSibling();
+            confirmButton.gameObject.SetActive(true);
+            confirmButton.transform.SetAsLastSibling(); // Bring to front
         }
     }
 }
