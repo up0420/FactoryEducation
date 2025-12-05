@@ -5522,7 +5522,7 @@ struct PatternMatchingContextVisitor_t00E5374972DC98D07ADC1F5730E2DDC9F13F1510  
 struct Visitor_t731FA15578AE75D062A04600930AD1E20C9FA960  : public RuntimeObject
 {
 };
-struct U3CWaitForInputCooldownU3Ed__27_tB0157BF5AF4C6972D7561200851C6A3B244B9A41  : public RuntimeObject
+struct U3CTutorialSequenceU3Ed__25_t2D6145337A4FE5FD290DB5D38433DFD430CC77D0  : public RuntimeObject
 {
 	int32_t ___U3CU3E1__state;
 	RuntimeObject* ___U3CU3E2__current;
@@ -15605,7 +15605,7 @@ struct TreePattern_tD2CAF2098824EE433B5479F48D49EC19858ACEEF  : public CommonTre
 struct TreePatternTreeAdaptor_t8D0F760F0CB0F6C91C50E3AFA6AE35AECDE52EB7  : public CommonTreeAdaptor_tE15F8C7E207F6816A6F49224C98D40FB330AB20F
 {
 };
-struct U3COpenDoorsAnimationU3Ed__25_tD2148A6D28D0428FE562E632313846D2F9CE9AFF  : public RuntimeObject
+struct U3COpenDoorsAnimationU3Ed__29_t1D5C409DE9E68303BA4F2EE4653C1F29074679A8  : public RuntimeObject
 {
 	int32_t ___U3CU3E1__state;
 	RuntimeObject* ___U3CU3E2__current;
@@ -25534,16 +25534,19 @@ struct TransferOwnershipOnSelect_t70AC6D93055B6A20EDC514DDABE302AE144A5925  : pu
 };
 struct TutorialManager_tA517EF826FE03300C6A8ED492158E82A0E210CCF  : public MonoBehaviour_t532A11E69716D348D8AA7F854AFCBFCB8AD17F71
 {
-	GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* ___tutorialCanvas;
+	GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* ___tutorialImage;
+	GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* ___lobbyCanvas;
 	Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* ___gatesDoorLeft;
 	Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* ___gatesDoorRight;
 	float ___doorOpenAngle;
 	float ___doorOpenDuration;
+	float ___tutorialDisplayTime;
 	float ___sceneTransitionDelay;
 	String_t* ___nextSceneName;
 	bool ___isTutorialImageVisible;
 	bool ___isDoorOpening;
 	bool ___isDoorOpened;
+	bool ___hasTriggered;
 	InputDevice_t882EE3EE8A71D8F5F38BA3F9356A49F24510E8BD ___leftController;
 	InputDevice_t882EE3EE8A71D8F5F38BA3F9356A49F24510E8BD ___rightController;
 };
@@ -30610,9 +30613,9 @@ const Il2CppTypeDefinitionSizes g_typeDefinitionSize16594 = { sizeof(ScoreManage
 IL2CPP_EXTERN_C_CONST Il2CppTypeDefinitionSizes g_typeDefinitionSize16595;
 const Il2CppTypeDefinitionSizes g_typeDefinitionSize16595 = { sizeof(TurnManager_t21C9AF6CC20195E4C26912566DA600813FBB3B41), -1, sizeof(TurnManager_t21C9AF6CC20195E4C26912566DA600813FBB3B41_StaticFields), 0 };
 IL2CPP_EXTERN_C_CONST Il2CppTypeDefinitionSizes g_typeDefinitionSize16596;
-const Il2CppTypeDefinitionSizes g_typeDefinitionSize16596 = { sizeof(U3COpenDoorsAnimationU3Ed__25_tD2148A6D28D0428FE562E632313846D2F9CE9AFF), -1, 0, 0 };
+const Il2CppTypeDefinitionSizes g_typeDefinitionSize16596 = { sizeof(U3COpenDoorsAnimationU3Ed__29_t1D5C409DE9E68303BA4F2EE4653C1F29074679A8), -1, 0, 0 };
 IL2CPP_EXTERN_C_CONST Il2CppTypeDefinitionSizes g_typeDefinitionSize16597;
-const Il2CppTypeDefinitionSizes g_typeDefinitionSize16597 = { sizeof(U3CWaitForInputCooldownU3Ed__27_tB0157BF5AF4C6972D7561200851C6A3B244B9A41), -1, 0, 0 };
+const Il2CppTypeDefinitionSizes g_typeDefinitionSize16597 = { sizeof(U3CTutorialSequenceU3Ed__25_t2D6145337A4FE5FD290DB5D38433DFD430CC77D0), -1, 0, 0 };
 IL2CPP_EXTERN_C_CONST Il2CppTypeDefinitionSizes g_typeDefinitionSize16598;
 const Il2CppTypeDefinitionSizes g_typeDefinitionSize16598 = { sizeof(TutorialManager_tA517EF826FE03300C6A8ED492158E82A0E210CCF), -1, sizeof(TutorialManager_tA517EF826FE03300C6A8ED492158E82A0E210CCF_StaticFields), 0 };
 IL2CPP_EXTERN_C_CONST Il2CppTypeDefinitionSizes g_typeDefinitionSize16599;

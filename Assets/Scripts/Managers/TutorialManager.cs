@@ -5,8 +5,8 @@ using System.Collections;
 
 /// <summary>
 /// Tutorial 씬 매니저
-/// - 트리거 버튼으로 튜토리얼 이미지 토글
-/// - 문 열림 애니메이션
+/// - 트리거 버튼으로 튜토리얼 이미지 표시
+/// - 5초 후 문 열림 애니메이션
 /// - Onegiog 씬으로 전환
 /// </summary>
 public class TutorialManager : MonoBehaviour
@@ -14,28 +14,35 @@ public class TutorialManager : MonoBehaviour
     public static TutorialManager Instance { get; private set; }
 
     [Header("Tutorial UI")]
-    public GameObject tutorialCanvas; // Tutorial 이미지 Canvas (LobbyCanvas)
+    public GameObject tutorialImage; // Tutorial 이미지 오브젝트 (Canvas 하위의 Tutorial)
+    public GameObject lobbyCanvas;   // LobbyCanvas 전체 오브젝트
 
     [Header("Door References")]
-    public Transform gatesDoorLeft;  // 왼쪽 문
-    public Transform gatesDoorRight; // 오른쪽 문
+    public GameObject gatesDoorLeft;  // 왼쪽 문 (DoorOpen 스크립트 있음)
+    public GameObject gatesDoorRight; // 오른쪽 문 (DoorOpen1 스크립트 있음)
 
-    [Header("Door Animation Settings")]
-    public float doorOpenAngle = 90f;  // 문이 열리는 각도 (Y축 회전)
-    public float doorOpenDuration = 2f; // 문 열리는 시간 (초)
-    public float sceneTransitionDelay = 4f; // 씬 전환 대기 시간 (초)
+    [Header("Tutorial Settings")]
+    public float tutorialDisplayTime = 5f;    // 튜토리얼 표시 시간 (초)
+    public float sceneTransitionDelay = 4f;   // 문 열린 후 씬 전환까지 대기 시간 (초)
 
     [Header("Scene Settings")]
-    public string nextSceneName = "Onegiog"; // 다음 씬 이름
+    public string nextSceneName = "Onegiog";  // 다음 씬 이름
 
     // 내부 상태
     private bool isTutorialImageVisible = false; // 튜토리얼 이미지 표시 여부
-    private bool isDoorOpening = false; // 문이 열리는 중인지
-    private bool isDoorOpened = false; // 문이 완전히 열렸는지
+    public bool isDoorOpening = false;          // 문이 열리는 중인지
+    private bool isDoorOpened = false;           // 문이 완전히 열렸는지
+    private bool hasTriggered = false;           // 트리거를 이미 눌렀는지 (중복 방지)
+
+    // 씬 전환 타이머
+    private bool isSceneTimerRunning = false;
+    private float sceneTimer = 0f;
 
     // VR 컨트롤러 입력
     private InputDevice leftController;
     private InputDevice rightController;
+
+    public bool Debug_bull;
 
     void Awake()
     {
@@ -56,11 +63,16 @@ public class TutorialManager : MonoBehaviour
         // VR 컨트롤러 초기화
         InitializeControllers();
 
-        // 튜토리얼 Canvas 초기 상태: 활성화 (튜토리얼 처음부터 보여줌)
-        if (tutorialCanvas != null)
+        // 튜토리얼 이미지 초기 상태: 비활성화
+        if (tutorialImage != null)
         {
-            tutorialCanvas.SetActive(true); // 초기에 보여줌
-            isTutorialImageVisible = true; // 이미 표시된 상태
+            tutorialImage.SetActive(false); // 초기에는 숨김
+            isTutorialImageVisible = false;
+            Debug.Log("[TutorialManager] Tutorial 이미지 초기 상태: 비활성화");
+        }
+        else
+        {
+            Debug.LogWarning("[TutorialManager] Tutorial Image가 설정되지 않았습니다!");
         }
 
         // 문 초기 상태 확인
@@ -75,8 +87,24 @@ public class TutorialManager : MonoBehaviour
             InitializeControllers();
         }
 
-        // 트리거 버튼 입력 감지
-        HandleTriggerInput();
+        // 아직 튜토리얼이 시작되지 않았을 때만 입력 받기
+        if (!hasTriggered)
+        {
+            // 트리거 버튼 입력 감지
+            HandleTriggerInput();
+
+            // 디버그용 강제 시작
+            if (Debug_bull)
+            {
+                Debug_bull = false;
+                hasTriggered = true;
+                StartCoroutine(TutorialSequence());
+            }
+        }
+
+        // 씬 전환 타이머 업데이트
+        UpdateSceneTimer();
+        
     }
 
     /// <summary>
@@ -117,24 +145,35 @@ public class TutorialManager : MonoBehaviour
     /// </summary>
     void OnTriggerPressed()
     {
-        // 이미 문이 열리는 중이면 무시
-        if (isDoorOpening || isDoorOpened) return;
+        // 이미 시작되었으면 무시
+        if (hasTriggered) return;
 
-        // 튜토리얼 이미지가 보이는 상태
-        if (isTutorialImageVisible)
-        {
-            // 두 번째 트리거: 이미지 숨기고 문 열기
-            HideTutorialImage();
-            OpenDoors();
-        }
-        else
-        {
-            // 첫 번째 트리거: 이미지 표시
-            ShowTutorialImage();
-        }
+        hasTriggered = true;
 
-        // 버튼 중복 입력 방지 (0.5초 대기)
-        StartCoroutine(WaitForInputCooldown());
+        Debug.Log("[TutorialManager] 트리거 버튼 눌림! 튜토리얼 시작");
+
+        // 튜토리얼 이미지 표시 → 5초 대기 → 문 열기
+        StartCoroutine(TutorialSequence());
+    }
+
+    /// <summary>
+    /// 튜토리얼 시퀀스 (이미지 표시 → 대기 → 문 열기)
+    /// 문 열림 애니메이션과 씬 전환은 코루틴 없이 Update에서 처리
+    /// </summary>
+    IEnumerator TutorialSequence()
+    {
+        // 1. 튜토리얼 이미지 표시
+        ShowTutorialImage();
+
+        // 2. 5초 대기
+        Debug.Log($"[TutorialManager] {tutorialDisplayTime}초 대기 중...");
+        yield return new WaitForSeconds(tutorialDisplayTime);
+
+        // 3. 튜토리얼 이미지 숨기기 + 로비 캔버스 비활성화
+        HideTutorialImage();
+
+        // 4. 문 열기 (코루틴 없음, 상태만 세팅 → Update에서 애니메이션)
+        OpenDoors();
     }
 
     /// <summary>
@@ -142,93 +181,116 @@ public class TutorialManager : MonoBehaviour
     /// </summary>
     void ShowTutorialImage()
     {
-        if (tutorialCanvas != null)
+        if (tutorialImage != null)
         {
-            tutorialCanvas.SetActive(true);
+            tutorialImage.SetActive(true);
             isTutorialImageVisible = true;
             Debug.Log("[TutorialManager] 튜토리얼 이미지 표시");
         }
         else
         {
-            Debug.LogWarning("[TutorialManager] Tutorial Canvas가 null입니다!");
+            Debug.LogWarning("[TutorialManager] Tutorial Image가 null입니다!");
         }
     }
 
     /// <summary>
-    /// 튜토리얼 이미지 숨기기
+    /// 튜토리얼 이미지 숨기기 + LobbyCanvas 비활성화
     /// </summary>
     void HideTutorialImage()
     {
-        if (tutorialCanvas != null)
+        if (tutorialImage != null)
         {
-            tutorialCanvas.SetActive(false);
+            tutorialImage.SetActive(false);
             isTutorialImageVisible = false;
             Debug.Log("[TutorialManager] 튜토리얼 이미지 숨김");
+        }
+
+        // LobbyCanvas 전체 비활성화
+        if (lobbyCanvas != null)
+        {
+            lobbyCanvas.SetActive(false);
+            Debug.Log("[TutorialManager] LobbyCanvas 비활성화");
+        }
+        else
+        {
+            Debug.LogWarning("[TutorialManager] LobbyCanvas가 설정되지 않았습니다!");
         }
     }
 
     /// <summary>
-    /// 문 열기 (코루틴 시작)
+    /// 문 열기 - DoorOpen과 DoorOpen1 스크립트의 Open bool을 true로 설정
     /// </summary>
     void OpenDoors()
     {
+        Debug.Log($"[TutorialManager] OpenDoors() 호출됨!");
+        Debug.Log($"[TutorialManager] gatesDoorLeft = {(gatesDoorLeft != null ? gatesDoorLeft.name : "NULL")}");
+        Debug.Log($"[TutorialManager] gatesDoorRight = {(gatesDoorRight != null ? gatesDoorRight.name : "NULL")}");
+
         if (gatesDoorLeft == null || gatesDoorRight == null)
         {
             Debug.LogError("[TutorialManager] 문 Transform이 설정되지 않았습니다!");
             return;
         }
 
-        Debug.Log("[TutorialManager] 문 열림 시작");
-        isDoorOpening = true;
-        StartCoroutine(OpenDoorsAnimation());
-    }
-
-    /// <summary>
-    /// 문 열림 애니메이션 코루틴
-    /// </summary>
-    IEnumerator OpenDoorsAnimation()
-    {
-        // 초기 회전값 저장
-        Quaternion leftStartRotation = gatesDoorLeft.rotation;
-        Quaternion rightStartRotation = gatesDoorRight.rotation;
-
-        // 목표 회전값 계산 (Y축 회전)
-        // 왼쪽 문: -90도 회전 (안쪽으로)
-        // 오른쪽 문: +90도 회전 (안쪽으로)
-        Quaternion leftTargetRotation = leftStartRotation * Quaternion.Euler(0, -doorOpenAngle, 0);
-        Quaternion rightTargetRotation = rightStartRotation * Quaternion.Euler(0, doorOpenAngle, 0);
-
-        float elapsedTime = 0f;
-
-        // 문 열림 애니메이션 (부드러운 회전)
-        while (elapsedTime < doorOpenDuration)
+        // 이미 열리고 있거나 완전히 열린 상태면 재실행 방지
+        if (isDoorOpening || isDoorOpened)
         {
-            elapsedTime += Time.deltaTime;
-            float t = elapsedTime / doorOpenDuration;
-
-            // EaseInOut 효과 (부드러운 시작 및 끝)
-            t = Mathf.SmoothStep(0f, 1f, t);
-
-            // 회전 보간
-            gatesDoorLeft.rotation = Quaternion.Slerp(leftStartRotation, leftTargetRotation, t);
-            gatesDoorRight.rotation = Quaternion.Slerp(rightStartRotation, rightTargetRotation, t);
-
-            yield return null;
+            Debug.Log($"[TutorialManager] 이미 문이 열리는 중이거나 열린 상태: isDoorOpening={isDoorOpening}, isDoorOpened={isDoorOpened}");
+            return;
         }
 
-        // 최종 회전값 적용 (정확한 각도)
-        gatesDoorLeft.rotation = leftTargetRotation;
-        gatesDoorRight.rotation = rightTargetRotation;
+        Debug.Log("[TutorialManager] 문 열림 시작!");
 
-        Debug.Log("[TutorialManager] 문 열림 완료");
-        isDoorOpening = false;
+        // 왼쪽 문의 DoorOpen 스크립트 찾아서 Open = true
+        DoorOpen leftDoorScript = gatesDoorLeft.GetComponent<DoorOpen>();
+        if (leftDoorScript != null)
+        {
+            leftDoorScript.Open = true;
+            Debug.Log("[TutorialManager] 왼쪽 문 DoorOpen.Open = true 설정");
+        }
+        else
+        {
+            Debug.LogWarning("[TutorialManager] 왼쪽 문에 DoorOpen 스크립트가 없습니다!");
+        }
+
+        // 오른쪽 문의 DoorOpen1 스크립트 찾아서 Open = true
+        DoorOpen1 rightDoorScript = gatesDoorRight.GetComponent<DoorOpen1>();
+        if (rightDoorScript != null)
+        {
+            rightDoorScript.Open = true;
+            Debug.Log("[TutorialManager] 오른쪽 문 DoorOpen1.Open = true 설정");
+        }
+        else
+        {
+            Debug.LogWarning("[TutorialManager] 오른쪽 문에 DoorOpen1 스크립트가 없습니다!");
+        }
+
+        isDoorOpening = true;
         isDoorOpened = true;
 
-        // 씬 전환 대기
-        yield return new WaitForSeconds(sceneTransitionDelay);
+        // 씬 전환 타이머 시작
+        isSceneTimerRunning = true;
+        sceneTimer = 0f;
 
-        // Onegiog 씬으로 전환
-        LoadNextScene();
+        Debug.Log($"[TutorialManager] 문 열림 완료! {sceneTransitionDelay}초 후 씬 전환");
+    }
+
+
+    /// <summary>
+    /// 문이 열린 후 일정 시간 대기 후 씬 전환
+    /// </summary>
+    void UpdateSceneTimer()
+    {
+        if (!isSceneTimerRunning)
+            return;
+
+        sceneTimer += Time.deltaTime;
+
+        if (sceneTimer >= sceneTransitionDelay)
+        {
+            isSceneTimerRunning = false;
+            LoadNextScene();
+        }
     }
 
     /// <summary>
@@ -250,16 +312,6 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 입력 쿨다운 (중복 입력 방지)
-    /// </summary>
-    IEnumerator WaitForInputCooldown()
-    {
-        enabled = false; // Update 비활성화
-        yield return new WaitForSeconds(0.5f);
-        enabled = true; // Update 재활성화
-    }
-
-    /// <summary>
     /// 문 오브젝트 유효성 검사
     /// </summary>
     void ValidateDoors()
@@ -276,13 +328,13 @@ public class TutorialManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 수동으로 문 열기 (디버그용)
+    /// 수동으로 튜토리얼 시작 (디버그용 또는 UI 버튼용)
     /// </summary>
-    public void DebugOpenDoors()
+    public void StartTutorial()
     {
-        if (!isDoorOpening && !isDoorOpened)
+        if (!hasTriggered)
         {
-            OpenDoors();
+            OnTriggerPressed();
         }
     }
 
