@@ -107,10 +107,11 @@ public class ScoreManager : MonoBehaviourPun
     {
         if (playerScores.ContainsKey(playerIndex))
         {
-            playerScores[playerIndex].workScore = score;
+            // [수정] 점수 누적 (+=)
+            playerScores[playerIndex].workScore += score;
             playerScores[playerIndex].CalculateTotal();
 
-            Debug.Log($"[ScoreManager] Player {playerIndex} 작업 점수: {score}");
+            Debug.Log($"[ScoreManager] Player {playerIndex} 작업 점수 추가: {score}, 총 작업 점수: {playerScores[playerIndex].workScore}");
 
             // 동기화
             if (photonView != null)
@@ -174,7 +175,8 @@ public class ScoreManager : MonoBehaviourPun
 
         if (workScore != 0)
         {
-            playerScores[playerIndex].workScore = workScore;
+            // [수정] 점수 누적 (+=)
+            playerScores[playerIndex].workScore += workScore;
         }
 
         if (safetyPenalty != 0)
