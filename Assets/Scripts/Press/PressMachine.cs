@@ -171,10 +171,14 @@ public class PressMachine : MonoBehaviourPun
             // [추가] 하강 완료 시점에서 모델 교체 (프레스 효과)
             if (hasProductInside && currentProduct != null)
             {
-                PressableObject pressable = currentProduct.GetComponent<PressableObject>();
-                if (pressable != null)
+                // [수정] null 체크 강화
+                if (currentProduct != null) 
                 {
-                    pressable.OnPressed();
+                    PressableObject pressable = currentProduct.GetComponent<PressableObject>();
+                    if (pressable != null)
+                    {
+                        pressable.OnPressed();
+                    }
                 }
             }
 
@@ -359,16 +363,24 @@ public class PressMachine : MonoBehaviourPun
 
     IEnumerator ForceCrushCoroutine()
     {
+        // [수정] 강제 크러시 중에는 일반 작동 중지
+        if (operatingCoroutine != null) StopCoroutine(operatingCoroutine);
+        currentState = PressState.Idle; // 상태 강제 초기화
+
         // 하강
         yield return StartCoroutine(MovePressHead(downPosition, "크러시!"));
 
         // [추가] 퀴즈용 크러시에서도 모델 교체 실행
         if (hasProductInside && currentProduct != null)
         {
-            PressableObject pressable = currentProduct.GetComponent<PressableObject>();
-            if (pressable != null)
+            // [수정] null 체크 강화
+            if (currentProduct != null)
             {
-                pressable.OnPressed();
+                PressableObject pressable = currentProduct.GetComponent<PressableObject>();
+                if (pressable != null)
+                {
+                    pressable.OnPressed();
+                }
             }
         }
 
