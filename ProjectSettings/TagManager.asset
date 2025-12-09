@@ -7,6 +7,7 @@ TagManager:
   - Bullet
   - PlayerHand
   - Bottom
+  - ProductMaterial
   layers:
   - Default
   - TransparentFX

@@ -248,6 +248,7 @@ public class QuizUIController : MonoBehaviour
         if (resultPanel != null) resultPanel.SetActive(false);
         if (intermediateScorePanel != null) intermediateScorePanel.SetActive(false);
         if (finalScorePanel != null) finalScorePanel.SetActive(false);
+        if (finalFeedbackPanel != null) finalFeedbackPanel.SetActive(false); // [추가] 피드백 패널도 숨김
     }
     [Header("Final Scoreboard UI")]
     public GameObject finalScorePanel;      // Final comprehensive scoreboard (White Canvas)
@@ -361,6 +362,10 @@ public class QuizUIController : MonoBehaviour
     public Color failColor = Color.black;   // [추가] 격려 색상
     public float failFontSize = 50f;        // [추가] 격려 폰트 크기
 
+    [Header("Final Feedback UI")]
+    public GameObject finalFeedbackPanel;   // [추가] 최종 피드백 패널
+    public TextMeshProUGUI finalFeedbackText; // [추가] 피드백 텍스트 (통합 표시)
+
     /// <summary>
     /// Show Final Comprehensive Scoreboard (Game End)
     /// </summary>
@@ -369,26 +374,21 @@ public class QuizUIController : MonoBehaviour
         // Hide all other panels
         HideAll();
         
-        // Show Final Scoreboard Panel
+        // 1. Show Final Scoreboard Panel (Scores Only)
         if (finalScorePanel != null)
         {
             finalScorePanel.SetActive(true);
         }
+
         // Display scores for each player
         for (int i = 0; i < finalPlayerScores.Length; i++)
         {
             if (i < allScores.Count && finalPlayerScores[i] != null)
             {
-                bool isSuccess = allScores[i] >= successThreshold;
-
-                // [수정] 점수에 따라 피드백 문구, 색상, 크기 적용
-                string feedback = isSuccess ? successMessage : failMessage;
-                finalPlayerScores[i].text = $"Player {i + 1}: {allScores[i]} Points{feedback}";
-                
-                // 색상 및 폰트 크기 변경
-                finalPlayerScores[i].color = isSuccess ? successColor : failColor;
-                finalPlayerScores[i].fontSize = isSuccess ? successFontSize : failFontSize;
-
+                // [수정] 점수만 표시 (피드백 제거)
+                finalPlayerScores[i].text = $"Player {i + 1}: {allScores[i]} Points";
+                finalPlayerScores[i].color = Color.black; // 기본 색상
+                finalPlayerScores[i].fontSize = 50f;      // 기본 크기
                 finalPlayerScores[i].gameObject.SetActive(true);
             }
             else if (finalPlayerScores[i] != null)
@@ -396,11 +396,45 @@ public class QuizUIController : MonoBehaviour
                 finalPlayerScores[i].gameObject.SetActive(false);
             }
         }
-        // [변경] 최종 화면에서만 확인 버튼 활성화
+
+        // [변경] 확인 버튼은 아직 숨김 (피드백 화면에서 보여줌)
+        if (confirmButton != null) confirmButton.gameObject.SetActive(false);
+
+        // 2. 3초 뒤에 피드백 패널로 전환
+        StartCoroutine(ShowFeedbackSequence(allScores));
+    }
+
+    System.Collections.IEnumerator ShowFeedbackSequence(List<int> allScores)
+    {
+        yield return new WaitForSeconds(3.0f);
+
+        // 스코어 패널 끄고 피드백 패널 켜기
+        if (finalScorePanel != null) finalScorePanel.SetActive(false);
+        if (finalFeedbackPanel != null) finalFeedbackPanel.SetActive(true);
+
+        // 피드백 텍스트 생성
+        if (finalFeedbackText != null)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            for (int i = 0; i < allScores.Count; i++)
+            {
+                bool isSuccess = allScores[i] >= successThreshold;
+                string message = isSuccess ? successMessage : failMessage;
+                string colorHex = ColorUtility.ToHtmlStringRGB(isSuccess ? successColor : failColor);
+                
+                // Rich Text로 색상 적용
+                sb.AppendLine($"Player {i + 1}: <color=#{colorHex}>{message}</color>");
+            }
+
+            finalFeedbackText.text = sb.ToString();
+        }
+
+        // 최종 확인 버튼 활성화
         if (confirmButton != null) 
         {
             confirmButton.gameObject.SetActive(true);
-            confirmButton.transform.SetAsLastSibling(); // Bring to front
+            confirmButton.transform.SetAsLastSibling();
         }
     }
 }
