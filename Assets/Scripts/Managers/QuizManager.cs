@@ -14,9 +14,15 @@ public class QuizManager : MonoBehaviourPunCallbacks
     [Header("Quiz Settings")]
     public List<QuizData> quizPool = new List<QuizData>(); // 퀴즈 데이터 리스트
     public int questionsPerPlayer = 5;   // 플레이어당 문제 수 (3 -> 5 변경)
-    public float timePerQuestion = 10f;  // 문제당 제한 시간
+    public float timePerQuestion = 10f;  // [복구] 문제당 제한 시간
 
-    [Header("References")]
+    [Header("Timing Settings")]
+    public float revealDelay = 1.0f;     // [추가] 정답 공개 대기 시간 (프레스 후)
+    public float showResultDuration = 2.0f; // [추가] 결과 보여주는 시간 (공개 후)
+
+    // ... (existing code) ...
+
+
     public QuizUIController uiController; // UI 컨트롤러 연결
     public QuizAssetSpawner assetSpawner; // 에셋 스포너 연결
     public Transform quizZone;            // 퀴즈 진행 위치 (플레이어 이동용)
@@ -183,72 +189,85 @@ public class QuizManager : MonoBehaviourPunCallbacks
     /// <summary>
     /// 시간 종료
     /// </summary>
+
+
+    /// <summary>
+    /// 시간 종료 (Update에서 호출)
+    /// </summary>
     void OnTimeUp()
     {
+        Debug.Log("[QuizManager] Time Up!");
         isTimerRunning = false;
-        Debug.Log("[QuizManager] 시간 종료!");
 
-        // 정답 체크
-        QuizData currentQuestion = usedQuestions[usedQuestions.Count - 1];
-        bool isCorrect = (playerAnswer.HasValue && playerAnswer.Value == currentQuestion.correctAnswer);
+        // 결과 처리 시퀀스 시작
+        StartCoroutine(ResultSequence());
+    }
 
-        Debug.Log($"[QuizManager] 정답: {(currentQuestion.correctAnswer ? "O" : "X")}, 플레이어 답: {(playerAnswer.HasValue ? (playerAnswer.Value ? "O" : "X") : "미선택")}, 결과: {(isCorrect ? "정답" : "오답")}");
-
-        // 점수 반영 (안전하게 처리)
-        try
+    /// <summary>
+    /// 결과 처리 시퀀스 (정답 확인 -> 연출 -> 점수 -> 대기 -> 다음)
+    /// </summary>
+    System.Collections.IEnumerator ResultSequence()
+    {
+        // 1. 정답 확인
+        bool isCorrect = false;
+        string explanation = "";
+        
+        if (playerAnswer.HasValue && usedQuestions.Count > 0)
         {
-            if (isCorrect)
-            {
-                if (ScoreManager.Instance != null)
-                {
-                    ScoreManager.Instance.AddWorkScore(currentPlayerIndex, 10);
-                }
-                
-                // [추가] 정답 효과음 및 이펙트
-                PlaySound(correctSound);
-                PlayEffect(correctEffectPrefab);
-            }
-            else
-            {
-                // [추가] 오답 효과음
-                PlaySound(wrongSound);
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[QuizManager] 점수 처리 중 오류 발생: {e.Message}");
+            QuizData currentQ = usedQuestions[usedQuestions.Count - 1];
+            isCorrect = (playerAnswer.Value == currentQ.correctAnswer);
+            explanation = currentQ.explanation;
         }
 
-        // UI 업데이트: 결과 표시
+        Debug.Log($"[QuizManager] 결과: {(isCorrect ? "정답" : "오답")}");
+
+        // 점수 부여
+        if (isCorrect)
+        {
+            ScoreManager.Instance.AddWorkScore(currentPlayerIndex, 10);
+            if (correctSound != null) PlaySound(correctSound);
+            if (correctEffectPrefab != null) PlayEffect(correctEffectPrefab);
+        }
+        else
+        {
+            if (wrongSound != null) PlaySound(wrongSound); // [수정] incorrectSound -> wrongSound
+        }
+
+        // 현재 점수 계산
+        int correctCount = 0;
+        var playerScore = ScoreManager.Instance.GetPlayerScore(currentPlayerIndex);
+        if (playerScore != null)
+        {
+            correctCount = playerScore.workScore / 10;
+        }
+
+        // UI 결과 표시
         if (uiController != null)
         {
-            // 현재 점수 계산 (10점당 1문제)
-            int currentScore = 0;
-            if (ScoreManager.Instance != null)
-            {
-                var scoreData = ScoreManager.Instance.GetPlayerScore(currentPlayerIndex);
-                if (scoreData != null) currentScore = scoreData.workScore;
-            }
-            int correctCount = currentScore / 10;
-
-            uiController.ShowResult(isCorrect, currentQuestion.explanation, correctCount, questionsPerPlayer);
+            // [수정] 인자 4개 전달 (isCorrect, explanation, correctCount, totalQuestions)
+            uiController.ShowResult(isCorrect, explanation, correctCount, questionsPerPlayer);
         }
 
-        // 프레스 기계 작동: 오답 에셋 파괴
-        if (assetSpawner != null && playerAnswer.HasValue)
+        // 2. 정답/오답 연출 (프레스 작동 및 공개)
+        if (assetSpawner != null)
         {
-            try
+            // [추가] 프레스 기계 작동 (애니메이션)
+            if (playerAnswer.HasValue)
             {
                 assetSpawner.CrushIncorrectAsset(playerAnswer.Value);
             }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[QuizManager] 에셋 파괴 중 오류 발생 (무시하고 진행): {e.Message}");
-            }
+
+            // [기존] 결과 강제 공개 (물음표 -> 실제 물건)
+            // 참고: CrushIncorrectAsset 내부에서도 DelayedCrush가 있지만, 
+            // ForceRevealResult는 양쪽 모두를 즉시 확실하게 공개하는 역할
+            assetSpawner.ForceRevealResult(isCorrect);
         }
 
-        // 다음 문제 또는 다음 턴으로 이동 (3초 -> 2초 변경)
-        Invoke(nameof(NextQuestion), 2f); 
+        // 3. 결과 보여주기 (3초 대기)
+        yield return new WaitForSeconds(showResultDuration);
+
+        // 4. 다음 문제로
+        NextQuestion();
     }
 
     /// <summary>
@@ -397,8 +416,8 @@ public class QuizManager : MonoBehaviourPunCallbacks
             return null;
         }
 
-        int randomIndex = Random.Range(0, availableQuestions.Count);
-        return availableQuestions[randomIndex];
+        // [수정] 랜덤이 아닌 순서대로 가져오기 (0번 인덱스 = 리스트의 첫 번째 미사용 문제)
+        return availableQuestions[0];
     }
 
     /// <summary>

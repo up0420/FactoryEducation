@@ -66,6 +66,13 @@ public class QuizAssetSpawner : MonoBehaviourPun
                 Debug.Log($"[QuizAssetSpawner] 오른쪽에 정답 에셋 배치: {correctPrefab.name}");
             }
         }
+
+        // [디버깅] 생성된 에셋에 스크립트가 제대로 붙어있는지 즉시 확인
+        if (leftAsset != null && leftAsset.GetComponent<PressableObject>() == null)
+            Debug.LogError($"[QuizAssetSpawner] 생성된 왼쪽 에셋({leftAsset.name})에 'PressableObject' 스크립트가 없습니다! 프리팹을 확인하세요.");
+        
+        if (rightAsset != null && rightAsset.GetComponent<PressableObject>() == null)
+            Debug.LogError($"[QuizAssetSpawner] 생성된 오른쪽 에셋({rightAsset.name})에 'PressableObject' 스크립트가 없습니다! 프리팹을 확인하세요.");
     }
 
     /// <summary>
@@ -128,6 +135,75 @@ public class QuizAssetSpawner : MonoBehaviourPun
         }
 
         Debug.Log($"[QuizAssetSpawner] 크러시 실행 - 정답: {(isLeftCorrect ? "왼쪽" : "오른쪽")}, 플레이어 답: {(playerAnswer ? "왼쪽" : "오른쪽")}");
+
+        // [추가] 물리 충돌이 실패할 경우를 대비해, 1.0초 뒤에 강제로 모델 교체 (Simulated Crush)
+        GameObject targetAsset = isLeftCorrect ? rightAsset : leftAsset;
+        if (targetAsset != null)
+        {
+            StartCoroutine(DelayedCrush(targetAsset, 1.0f));
+        }
+    }
+
+    /// <summary>
+    /// [추가] 프레스 기계가 내려오는 시간에 맞춰 모델을 강제로 교체
+    /// </summary>
+    System.Collections.IEnumerator DelayedCrush(GameObject target, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (target != null)
+        {
+            PressableObject pressable = target.GetComponent<PressableObject>();
+            if (pressable != null)
+            {
+                pressable.OnPressed();
+                Debug.Log($"[QuizAssetSpawner] 강제 크러시(Simulated) 실행 완료: {target.name}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// [최후의 수단] 프레스 기계고 뭐고 다 무시하고, 그냥 강제로 모델을 바꿔버림
+    /// </summary>
+    public void ForceRevealResult(bool playerAnswer)
+    {
+        Debug.Log("[QuizAssetSpawner] 강제 정답 공개 실행 (ForceRevealResult)");
+
+        // 1. 왼쪽 에셋 처리
+        if (leftAsset != null)
+        {
+            bool isLeftTargetCorrect = isLeftCorrect; // 왼쪽이 정답인가?
+            ProcessReveal(leftAsset, isLeftTargetCorrect);
+        }
+
+        // 2. 오른쪽 에셋 처리
+        if (rightAsset != null)
+        {
+            bool isRightTargetCorrect = !isLeftCorrect; // 오른쪽이 정답인가?
+            ProcessReveal(rightAsset, isRightTargetCorrect);
+        }
+    }
+
+    private void ProcessReveal(GameObject asset, bool isCorrectAsset)
+    {
+        // 1단계: 스크립트로 시도
+        PressableObject pressable = asset.GetComponent<PressableObject>();
+        if (pressable != null)
+        {
+            pressable.Reveal();
+            return;
+        }
+
+        // 2단계: 스크립트가 없으면 하이라키 구조로 직접 찾아서 끔/켬 (Fallback)
+        Transform normal = asset.transform.Find("Normal_Model");
+        Transform ghost = asset.transform.Find("Ghost_Model");
+        if (ghost == null) ghost = asset.transform.Find("Safety_Model");
+        if (ghost == null) ghost = asset.transform.Find("Ghost_Model2");
+        if (ghost == null) ghost = asset.transform.Find("Helmet Variant"); // 헬멧용
+
+        if (normal != null) normal.gameObject.SetActive(false);
+        if (ghost != null) ghost.gameObject.SetActive(true);
+
+        Debug.Log($"[QuizAssetSpawner] {asset.name} 강제 변환 완료 (스크립트 없이 직접 제어)");
     }
 
     /// <summary>
