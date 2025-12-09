@@ -304,6 +304,9 @@ public class PressMachine : MonoBehaviourPun
 
     void OnTriggerEnter(Collider other)
     {
+        // [디버깅] 무엇이든 닿으면 로그 출력
+        Debug.Log($"[PressMachine] 충돌 감지됨! 이름: {other.name}, 태그: {other.tag}");
+
         // 제품 감지
         if (other.CompareTag("ProductMaterial"))
         {
@@ -382,6 +385,10 @@ public class PressMachine : MonoBehaviourPun
                     pressable.OnPressed();
                 }
             }
+        }
+        else
+        {
+            Debug.LogWarning($"[PressMachine] 강제 크러시 실행 중이지만 제품이 감지되지 않았습니다. (hasProductInside: {hasProductInside}, currentProduct: {currentProduct})");
         }
 
         // 0.5초 대기 (압착 효과)

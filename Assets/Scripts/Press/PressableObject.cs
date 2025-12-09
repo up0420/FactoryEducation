@@ -11,6 +11,27 @@ public class PressableObject : MonoBehaviour
 
     void Start()
     {
+        // [자동 감지] Inspector에 할당하지 않았을 경우, 이름으로 찾아서 연결
+        if (beforeModel == null)
+        {
+            Transform normal = transform.Find("Normal_Model");
+            if (normal != null) beforeModel = normal.gameObject;
+        }
+
+        if (afterModel == null)
+        {
+            // Ghost_Model 또는 Safety_Model 찾기
+            Transform ghost = transform.Find("Ghost_Model");
+            if (ghost == null) ghost = transform.Find("Safety_Model");
+            if (ghost == null) ghost = transform.Find("Ghost_Model2"); // 혹시 몰라 추가
+
+            if (ghost != null) afterModel = ghost.gameObject;
+        }
+
+        // [디버깅] 연결 상태 확인
+        if (beforeModel == null) Debug.LogError($"[PressableObject] '{name}'에 'Before Model'이 연결되지 않았습니다! (Normal_Model을 찾을 수 없음)");
+        if (afterModel == null) Debug.LogError($"[PressableObject] '{name}'에 'After Model'이 연결되지 않았습니다! (Ghost_Model 또는 Safety_Model을 찾을 수 없음)");
+
         // 시작할 때 초기화
         if (beforeModel != null) beforeModel.SetActive(true);
         if (afterModel != null) afterModel.SetActive(false);
@@ -24,7 +45,18 @@ public class PressableObject : MonoBehaviour
         if (beforeModel != null) beforeModel.SetActive(false);
         if (afterModel != null) afterModel.SetActive(true);
         
-        Debug.Log($"[PressableObject] {name} 모델 교체 완료!");
+        Debug.Log($"[PressableObject] {name} 모델 교체 완료! (Pressed)");
+    }
+
+    /// <summary>
+    /// [추가] 물리적 충돌 없이 모델만 교체 (정답 공개용)
+    /// </summary>
+    public void Reveal()
+    {
+        if (beforeModel != null) beforeModel.SetActive(false);
+        if (afterModel != null) afterModel.SetActive(true);
+
+        Debug.Log($"[PressableObject] {name} 정답 공개 완료! (Reveal)");
     }
 
     private void OnTriggerEnter(Collider other)
